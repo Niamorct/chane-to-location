@@ -535,36 +535,6 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
     if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
   }
 
-  function sendEdlMail(type){
-    if(!selBooking||!selVehicle)return;
-    const bk=selBooking,v=selVehicle;
-    const isIn=type==="in";
-    const to=bk.email||bk.phone||"";
-    const label=isIn?"À LA RÉCUPÉRATION":"À LA DÉPOSE";
-    const dateVal=isIn?fd(bk.start):fd(bk.end);
-    const data=isIn?edlIn:edlOut;
-    const subject=encodeURIComponent("État des lieux "+label+" — "+v.name);
-    const dmgList=(data.damages||[]).join(", ")||"Aucun";
-    const body=encodeURIComponent(
-      "Bonjour "+bk.client+",\n\n"+
-      "Voici le récapitulatif de votre état des lieux "+label.toLowerCase()+" :\n\n"+
-      "🚗 Véhicule : "+v.name+" ("+v.plate+")\n"+
-      "📅 Date : "+dateVal+"\n\n"+
-      "📊 NIVEAUX :\n"+
-      "• Carburant : "+FL[data.fuel??2]+"\n"+
-      "• Propreté intérieure : "+CL[data.cleanIn??4]+"\n"+
-      "• Propreté extérieure : "+CL[data.cleanOut??4]+"\\n"+
-      "• Kilométrage : "+(data.mileage||"—")+" km\\n\\n"+
-      "🗺 Dommages constatés : "+dmgList+"\\n"+
-      (data.notes?"📝 Observations : "+data.notes+"\\n\\n":"\\n")+
-      "Pour toute question :\\n"+
-      "📞 0693 01 00 94\\n"+
-      "📧 chanetolocation@gmail.com\n\n"+
-      "Cordialement,\nCHANE-TO LOCATION"
-    );
-    window.open("mailto:"+to+"?subject="+subject+"&body="+body,"_blank");
-  }
-
   return(
     <div>
       <div style={{marginBottom:16}}>
@@ -615,14 +585,9 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
               <div style={{fontSize:15,fontWeight:800,color:"#10B981"}}>À LA RÉCUPÉRATION</div>
               <div style={{fontSize:11,color:"#64748B"}}>Début — {fd(selBooking.start)}</div>
             </div>
-            <div style={{display:"flex",gap:6}}>
-              <button onClick={printIn} style={{background:"linear-gradient(135deg,#10B981,#059669)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:5}}>
-                <span>📥</span> PDF
-              </button>
-              <button onClick={()=>sendEdlMail("in")} style={{background:"linear-gradient(135deg,#0EA5E9,#3B82F6)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:5}}>
-                <span>📧</span> Email
-              </button>
-            </div>
+            <button onClick={printIn} style={{background:"linear-gradient(135deg,#10B981,#059669)",border:"none",color:"#fff",padding:"8px 16px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+              <span>📥</span> PDF Récupération
+            </button>
           </div>
           <EdlSection title="" icon="" data={edlIn} onChange={setEdlIn} mob={mob} BG={BG} S1={S1} S2={S2}/>
         </div>
@@ -635,14 +600,9 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
               <div style={{fontSize:15,fontWeight:800,color:"#EF4444"}}>À LA DÉPOSE</div>
               <div style={{fontSize:11,color:"#64748B"}}>Fin — {fd(selBooking.end)}</div>
             </div>
-            <div style={{display:"flex",gap:6}}>
-              <button onClick={printOut} style={{background:"linear-gradient(135deg,#EF4444,#DC2626)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:5}}>
-                <span>📥</span> PDF
-              </button>
-              <button onClick={()=>sendEdlMail("out")} style={{background:"linear-gradient(135deg,#F59E0B,#EF4444)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:5}}>
-                <span>📧</span> Email
-              </button>
-            </div>
+            <button onClick={printOut} style={{background:"linear-gradient(135deg,#EF4444,#DC2626)",border:"none",color:"#fff",padding:"8px 16px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+              <span>📥</span> PDF Dépose
+            </button>
           </div>
           <EdlSection title="" icon="" data={edlOut} onChange={setEdlOut} mob={mob} BG={BG} S1={S1} S2={S2}/>
         </div>
@@ -775,31 +735,6 @@ export default function App(){
   const delE=async id=>{setSyncing(true);await dbDel("expenses",id);setExpenses(prev=>prev.filter(e=>e.id!==id));setModal(null);showT("Supprimée","info");setSyncing(false);};
   const openNewR=()=>{setForm({vehicleId:vehicles[0]?.id||"",start:spf?ps:today,end:spf?pe:ad(today,1),client:"",phone:"",email:"",address:"",licenseNum:"",rate:"",deposit:"",notes:"",pickupLocation:"agence",dropLocation:"agence"});setModal({type:"add-g"});};
   const exportPDF=(b,v)=>{const bm={...b,...cex};const html=cHTML(bm,v,cco);const w=window.open("","_blank","width=950,height=1100");if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);};
-  const sendContractMail=(b,v)=>{
-    const days=gdb(b.start,b.end);
-    const total=(b.rate*days)+(Number(cex.extraFees)||0);
-    const cn="CTR-"+new Date().getFullYear()+"-"+String(b.id).padStart(4,"0");
-    const to=cex.email||b.email||"";
-    const subject=encodeURIComponent("Contrat de location "+cn+" — "+v.name);
-    const body=encodeURIComponent(
-      "Bonjour "+b.client+",\n\n"+
-      "Veuillez trouver ci-joint votre contrat de location.\n\n"+
-      "Récapitulatif :\n"+
-      "• Véhicule : "+v.name+" ("+v.plate+")\n"+
-      "• Période : "+fd(b.start)+" → "+fd(b.end)+" ("+days+" jour"+(days>1?"s":"")+")\n"+
-      "• Lieu de récupération : "+(b.pickupLocation==="aeroport"?"Aéroport":"Agence")+"\n"+
-      "• Lieu de dépose : "+(b.dropLocation==="aeroport"?"Aéroport":"Agence")+"\n"+
-      "• Tarif/jour : "+b.rate+" €\n"+
-      (Number(cex.extraFees)>0?"• Frais additionnels : "+cex.extraFees+" € ("+cex.extraFeesNote+")\n":"")+
-      "• Caution : "+(cex.deposit||b.deposit||0)+" €\n"+
-      "• Total : "+total.toLocaleString("fr-FR")+" €\n\n"+
-      "Pour toute question, n'hésitez pas à nous contacter :\n"+
-      "📞 "+cco.phone+"\n"+
-      "📧 "+(cco.email||"chanetolocation@gmail.com")+"\n\n"+
-      "Cordialement,\n"+cco.name
-    );
-    window.open("mailto:"+to+"?subject="+subject+"&body="+body,"_blank");
-  };
 
   const aip=useMemo(()=>{if(!spf||!ps||!pe)return vehicles;return vehicles.filter(v=>avail(v.id,ps,pe,bookings,undefined));},[vehicles,bookings,spf,ps,pe]);
   const dv=spf?aip:vehicles;
@@ -1277,14 +1212,9 @@ export default function App(){
                     <SignatureCanvas label="Signature du locataire" value={cex.sigLocataire||null} onChange={v=>setCex({...cex,sigLocataire:v})} color="#10B981"/>
                   </div>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                  <button onClick={()=>exportPDF({...scb,...cex},scv)} style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"13px 10px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:"0 4px 20px rgba(59,130,246,.4)"}}>
-                    <span style={{fontSize:15}}>📥</span> PDF
-                  </button>
-                  <button onClick={()=>sendContractMail({...scb,...cex},scv)} style={{background:"linear-gradient(135deg,#1a1a2e,#10B981)",border:"none",color:"#fff",padding:"13px 10px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:"0 4px 20px rgba(16,185,129,.3)"}}>
-                    <span style={{fontSize:15}}>📧</span> Email
-                  </button>
-                </div>
+                <button onClick={()=>exportPDF({...scb,...cex},scv)} style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"13px 20px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:"0 4px 20px rgba(59,130,246,.4)"}}>
+                  <span style={{fontSize:15}}>📥</span> Exporter en PDF
+                </button>
               </>
             )}
           </div>
