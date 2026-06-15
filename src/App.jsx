@@ -62,8 +62,13 @@ function CF({label,value,onChange,placeholder,disabled}){
   return <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:3}}>{label.toUpperCase()}</label><input value={value||""} onChange={e=>onChange(e.target.value)} placeholder={placeholder} disabled={disabled} style={{width:"100%",background:"#0F1117",border:"1px solid #1E2535",color:"#E2E8F0",padding:"7px 9px",borderRadius:6,fontSize:12,outline:"none",opacity:disabled?0.6:1}}/></div>;
 }
 function useIsMobile(){
-  const[m,setM]=useState(window.innerWidth<768);
-  useEffect(()=>{const h=()=>setM(window.innerWidth<768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+  const[m,setM]=useState(false);
+  useEffect(()=>{
+    const check=()=>setM(window.innerWidth<640);
+    check();
+    window.addEventListener("resize",check);
+    return()=>window.removeEventListener("resize",check);
+  },[]);
   return m;
 }
 
