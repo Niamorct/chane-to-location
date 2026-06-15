@@ -441,6 +441,20 @@ function EdlSection({title,icon,data,onChange,mob,BG,S1,S2}){
 }
 
 function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
+  const isPWA=()=>window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+  const openPDFBlob=(html,filename)=>{
+    if(isPWA()){
+      const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.target="_blank";a.rel="noopener noreferrer";
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
+    } else {
+      const w=window.open("","_blank","width=950,height=1100");
+      if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
+    }
+  };
   const[selBookingId,setSelBookingId]=useState(null);
   const[edlIn,setEdlIn]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[],sigLoueur:null,sigLocataire:null});
   const[edlOut,setEdlOut]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[],sigLoueur:null,sigLocataire:null});
@@ -524,15 +538,13 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
   function printIn(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
-    const w=window.open("","_blank","width=950,height=1100");
-    if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
+    openPDFBlob(html,"EDL_Recuperation_"+bk.client.replace(/\s+/g,"_")+".html");
   }
 
   function printOut(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
-    const w=window.open("","_blank","width=950,height=1100");
-    if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
+    openPDFBlob(html,"EDL_Depose_"+bk.client.replace(/\s+/g,"_")+".html");
   }
 
   return(
@@ -734,7 +746,24 @@ export default function App(){
   };
   const delE=async id=>{setSyncing(true);await dbDel("expenses",id);setExpenses(prev=>prev.filter(e=>e.id!==id));setModal(null);showT("Supprimée","info");setSyncing(false);};
   const openNewR=()=>{setForm({vehicleId:vehicles[0]?.id||"",start:spf?ps:today,end:spf?pe:ad(today,1),client:"",phone:"",email:"",address:"",licenseNum:"",rate:"",deposit:"",notes:"",pickupLocation:"agence",dropLocation:"agence"});setModal({type:"add-g"});};
-  const exportPDF=(b,v)=>{const bm={...b,...cex};const html=cHTML(bm,v,cco);const w=window.open("","_blank","width=950,height=1100");if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);};
+  const isPWA=()=>window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+  const openPDF=(html,filename)=>{
+    if(isPWA()){
+      // Sur app iPhone : télécharger en blob et ouvrir dans Safari
+      const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.target="_blank";a.rel="noopener noreferrer";
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
+    } else {
+      // Sur navigateur : popup classique
+      const w=window.open("","_blank","width=950,height=1100");
+      if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
+    }
+  };
+  const exportPDF=(b,v)=>{const bm={...b,...cex};const html=cHTML(bm,v,cco);const cn="Contrat_CTR-"+new Date().getFullYear()+"-"+String(b.id).padStart(4,"0")+"_"+b.client.replace(/\s+/g,"_")+".html";openPDF(html,cn);};
+
 
   const aip=useMemo(()=>{if(!spf||!ps||!pe)return vehicles;return vehicles.filter(v=>avail(v.id,ps,pe,bookings,undefined));},[vehicles,bookings,spf,ps,pe]);
   const dv=spf?aip:vehicles;
