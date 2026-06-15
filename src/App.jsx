@@ -370,26 +370,27 @@ export default function App(){
 
         {/* Vue Semaine */}
         {vm==="week"&&(
-          <div style={{overflowX:"auto"}}>
-            <div style={{minWidth:mob?600:780}}>
-              <div style={{display:"grid",gridTemplateColumns:"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
-                <div style={{padding:"7px 10px",background:S1,fontSize:10,color:"#475569",fontWeight:600}}>VÉHICULE</div>
+          <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginLeft:mob?-14:0,marginRight:mob?-14:0,paddingLeft:mob?14:0,paddingRight:mob?14:0}}>
+            <div style={{minWidth:mob?500:780}}>
+              <div style={{display:"grid",gridTemplateColumns:mob?"70px repeat(7,1fr)":"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
+                <div style={{padding:mob?"5px 4px":"7px 10px",background:S1,fontSize:mob?8:10,color:"#475569",fontWeight:600}}>{mob?"":"VÉHICULE"}</div>
                 {wdates.map(date=>{const d=pd(date),isT=date===today,isS=date===selDate;return(
-                  <div key={date} onClick={()=>{setSelDate(date);setVm("day");}} style={{padding:"7px",background:isS?"#3B82F620":S1,textAlign:"center",cursor:"pointer",borderBottom:isS?"2px solid #3B82F6":"2px solid transparent"}}>
-                    <div style={{fontSize:9,color:"#475569",fontWeight:600}}>{d.toLocaleDateString("fr-FR",{weekday:"short"}).toUpperCase()}</div>
-                    <div style={{fontSize:14,fontWeight:700,color:isT?"#3B82F6":"#E2E8F0"}}>{d.getDate()}</div>
+                  <div key={date} onClick={()=>{setSelDate(date);setVm("day");}} style={{padding:mob?"4px 2px":"7px",background:isS?"#3B82F620":S1,textAlign:"center",cursor:"pointer",borderBottom:isS?"2px solid #3B82F6":"2px solid transparent"}}>
+                    <div style={{fontSize:mob?7:9,color:"#475569",fontWeight:600}}>{d.toLocaleDateString("fr-FR",{weekday:"short"}).toUpperCase()}</div>
+                    <div style={{fontSize:mob?12:14,fontWeight:700,color:isT?"#3B82F6":"#E2E8F0"}}>{d.getDate()}</div>
                   </div>
                 );})}
               </div>
               {dv.map(v=>(
-                <div key={v.id} style={{display:"grid",gridTemplateColumns:"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
-                  <div style={{background:S1,padding:"7px 10px",display:"flex",alignItems:"center",gap:7}}>
-                    <div style={{width:7,height:7,borderRadius:"50%",background:v.color,flexShrink:0}}/>
-                    <div style={{fontSize:11,fontWeight:600,color:"#E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.name}</div>
+                <div key={v.id} style={{display:"grid",gridTemplateColumns:mob?"70px repeat(7,1fr)":"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
+                  <div style={{background:S1,padding:mob?"5px 4px":"7px 10px",display:"flex",alignItems:"center",gap:mob?4:7,overflow:"hidden"}}>
+                    <div style={{width:mob?5:7,height:mob?5:7,borderRadius:"50%",background:v.color,flexShrink:0}}/>
+                    {!mob&&<div style={{fontSize:11,fontWeight:600,color:"#E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.name}</div>}
+                    {mob&&<div style={{fontSize:8,fontWeight:600,color:"#E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",lineHeight:1.2}}>{v.name.split(" ").slice(-1)[0]}</div>}
                   </div>
                   {wdates.map(date=>{const bk=gbod(v.id,date),isS=date===selDate;return(
-                    <div key={date} onClick={()=>openDetail(v.id,date)} style={{background:bk?v.color+"25":S1,border:"1px solid "+(isS?"#3B82F650":"transparent"),padding:"6px 8px",cursor:"pointer",minHeight:48,position:"relative"}}>
-                      {bk?(<><div style={{fontSize:9,fontWeight:700,color:v.color,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{bk.client}</div><div style={{fontSize:8,color:"#64748B"}}>{bk.rate} €/j</div><div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:v.color,opacity:.7}}/></>):<div style={{color:S2,fontSize:14,textAlign:"center",marginTop:4}}>+</div>}
+                    <div key={date} onClick={()=>openDetail(v.id,date)} style={{background:bk?v.color+"25":S1,border:"1px solid "+(isS?"#3B82F650":"transparent"),padding:mob?"3px 2px":"6px 8px",cursor:"pointer",minHeight:mob?40:48,position:"relative",overflow:"hidden"}}>
+                      {bk?(<><div style={{fontSize:mob?7:9,fontWeight:700,color:v.color,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{mob?bk.client.split(" ")[0]:bk.client}</div>{!mob&&<div style={{fontSize:8,color:"#64748B"}}>{bk.rate} €/j</div>}<div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:v.color,opacity:.7}}/></>):<div style={{color:S2,fontSize:mob?10:14,textAlign:"center",marginTop:mob?10:4}}>+</div>}
                     </div>
                   );})}
                 </div>
