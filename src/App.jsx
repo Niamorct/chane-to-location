@@ -368,110 +368,128 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
   const selBooking=bookings.find(b=>b.id===selBookingId);
   const selVehicle=selBooking?vehicles.find(v=>v.id===selBooking.vehicleId):null;
 
-  const fuelLabels=["Vide","1/4","1/2","3/4","Plein"];
-  const cleanLabels=["Très sale","Sale","Moyen","Propre","Très propre"];
+  const FL=["Vide","1/4","1/2","3/4","Plein"];
+  const CL=["Très sale","Sale","Moyen","Propre","Très propre"];
 
-  function buildGauge(val){
-    return "<div class='gauge'>"+Array(5).fill(0).map(function(_,i){return "<div class='g-cell "+(i<=val?"g-fill":"g-empty")+"'></div>";}).join("")+"</div>";
-  }
-  function buildEdlSection(label,bk,v,data,fuelLabels,cleanLabels,fd,dataIn){
-    const dmgList=(data.damages||[]).length===0?"<div style='color:#6b7280;font-size:9pt;'>Aucun dommage constaté</div>":"<div class='dmg-list'>"+data.damages.map(function(d){return "<span class='dmg-tag'>"+d+"</span>";}).join("")+"</div>";
-    const photoBlock=(data.photos||[]).length>0?"<div class='s'><div class='sh'>📷 PHOTOS</div><div class='sb'><div class='photos'>"+data.photos.map(function(p){return "<img class='photo' src='"+p.url+"' alt='photo'/>";}).join("")+"</div></div></div>":"";
-    const notesBlock=data.notes?"<div class='s'><div class='sh'>📝 OBSERVATIONS</div><div class='sb'><div style='font-size:9pt;'>"+data.notes+"</div></div></div>":"";
-    const kmBlock=dataIn&&dataIn.mileage&&data.mileage?"<div class='fr'><span class='fl'>Km parcourus</span><span class='fv'>"+(Number(data.mileage)-Number(dataIn.mileage))+" km</span></div>":"";
-    return "<div class='page'>"+
-      "<div class='hd'><div class='title'>ÉTAT DES LIEUX — "+label+"</div>"+
-      "<div style='font-size:8pt;color:#64748b;margin-top:4px;'>CHANE-TO LOCATION · 0693 01 00 94 · chanetolocation@gmail.com</div></div>"+
-      "<div class='g2'>"+
-      "<div class='s'><div class='sh'>🚗 VÉHICULE</div><div class='sb'>"+
-      "<div class='fr'><span class='fl'>Désignation</span><span class='fv'>"+v.name+"</span></div>"+
-      "<div class='fr'><span class='fl'>Immatriculation</span><span class='fv'>"+v.plate+"</span></div>"+
-      "<div class='fr'><span class='fl'>Kilométrage</span><span class='fv'>"+(data.mileage||"—")+" km</span></div>"+
-      kmBlock+
-      "</div></div>"+
-      "<div class='s'><div class='sh'>👤 LOCATAIRE</div><div class='sb'>"+
-      "<div class='fr'><span class='fl'>Nom</span><span class='fv'>"+bk.client+"</span></div>"+
-      "<div class='fr'><span class='fl'>Tél</span><span class='fv'>"+(bk.phone||"—")+"</span></div>"+
-      "<div class='fr'><span class='fl'>"+(label==="ENTRÉE"?"Début":"Fin")+" location</span><span class='fv'>"+(label==="ENTRÉE"?fd(bk.start):fd(bk.end))+"</span></div>"+
-      "</div></div></div>"+
-      "<div class='s'><div class='sh'>📊 NIVEAUX & PROPRETÉ</div><div class='sb'>"+
-      "<div class='fr'><span class='fl'>Carburant</span><span class='fv'>"+fuelLabels[data.fuel??2]+"</span></div>"+
-      buildGauge(data.fuel??2)+
-      "<div class='fr' style='margin-top:6px;'><span class='fl'>Propreté intérieure</span><span class='fv'>"+cleanLabels[data.cleanIn??4]+"</span></div>"+
-      "<div class='fr'><span class='fl'>Propreté extérieure</span><span class='fv'>"+cleanLabels[data.cleanOut??4]+"</span></div>"+
-      "</div></div>"+
-      "<div class='s'><div class='sh'>🗺 DOMMAGES CONSTATÉS</div><div class='sb'>"+dmgList+"</div></div>"+
-      notesBlock+photoBlock+
-      "<div class='g2'>"+
-      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOUEUR</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>CHANE-TO LOCATION</div></div>"+
-      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOCATAIRE</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>"+bk.client+" — Lu et approuvé</div></div>"+
-      "</div>"+
-      "<div class='ft'>CHANE-TO LOCATION · État des lieux de "+label.toLowerCase()+" · "+bk.client+" · "+(label==="ENTRÉE"?fd(bk.start):fd(bk.end))+"</div>"+
-      "</div>";
-  }
-    function printEdl(){
-    const bk=selBooking,v=selVehicle;
-    if(!bk||!v)return;
-    const html="<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><title>État des lieux — "+bk.client+"</title>"+
-    "<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10pt;}"+
-    ".page{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto;page-break-after:always;}"+
+  const CSS="*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10pt;}"+
+    ".page{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto;}"+
     ".hd{border-bottom:3px solid #0F1117;padding-bottom:10px;margin-bottom:12px;}"+
     ".title{font-size:16pt;font-weight:900;color:#0F1117;}"+
+    ".sub{font-size:8pt;color:#64748b;margin-top:4px;}"+
     ".g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;}"+
     ".s{border:1px solid #d1d5db;border-radius:6px;overflow:hidden;margin-bottom:10px;}"+
     ".sh{background:#0F1117;color:white;padding:5px 10px;font-size:8pt;font-weight:700;}"+
     ".sb{padding:10px;}"+
     ".fr{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:3px 0;}"+
     ".fr:last-child{border:none;}.fl{font-size:8pt;color:#6b7280;font-weight:600;}.fv{font-size:9pt;color:#111827;font-weight:600;}"+
-    ".gauge{display:flex;gap:3px;margin-top:4px;}.g-cell{flex:1;height:16px;border-radius:3px;border:1px solid #d1d5db;}"+
-    ".g-fill{background:#3B82F6;}.g-empty{background:#f3f4f6;}"+
+    ".gauge{display:flex;gap:3px;margin-top:4px;}.gc{flex:1;height:16px;border-radius:3px;border:1px solid #d1d5db;}"+
+    ".gf{background:#3B82F6;}.ge{background:#f3f4f6;}"+
     ".sig{border:1px solid #d1d5db;border-radius:5px;padding:10px;margin-top:10px;}"+
     ".sl{border-bottom:1px solid #374151;height:40px;margin-bottom:5px;}"+
     ".ft{font-size:7pt;color:#9ca3af;text-align:center;margin-top:10px;}"+
-    ".dmg-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}"+
-    ".dmg-tag{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:2px 8px;font-size:8pt;color:#dc2626;}"+
-    ".photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}"+
-    ".photo{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #d1d5db;}"+
-    "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{page-break-after:always;}}"+
-    "</style></head><body>"+
-    buildEdlSection("ENTRÉE",bk,v,edlIn,fuelLabels,cleanLabels,fd)+
-    buildEdlSection("SORTIE",bk,v,edlOut,fuelLabels,cleanLabels,fd,edlIn)+
-    "</body></html>";
+    ".dl{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}"+
+    ".dt{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:2px 8px;font-size:8pt;color:#dc2626;}"+
+    ".ph{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}"+
+    ".pi{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #d1d5db;}"+
+    "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}";
+
+  function buildGauge(val){
+    return "<div class='gauge'>"+Array(5).fill(0).map((_,i)=>"<div class='gc "+(i<=val?"gf":"ge")+"'></div>").join("")+"</div>";
+  }
+
+  function buildPDF(title,dateLabel,dateVal,bk,v,data,dataIn){
+    const dmgHTML=(data.damages||[]).length===0
+      ?"<div style='color:#6b7280;font-size:9pt;'>Aucun dommage constaté</div>"
+      :"<div class='dl'>"+data.damages.map(d=>"<span class='dt'>"+d+"</span>").join("")+"</div>";
+    const notesHTML=data.notes?"<div class='s'><div class='sh'>📝 OBSERVATIONS</div><div class='sb'><div style='font-size:9pt;'>"+data.notes+"</div></div></div>":"";
+    const photosHTML=(data.photos||[]).length>0
+      ?"<div class='s'><div class='sh'>📷 PHOTOS</div><div class='sb'><div class='ph'>"+data.photos.map(p=>"<img class='pi' src='"+p.url+"' alt=''/>").join("")+"</div></div></div>"
+      :"";
+    const kmHTML=dataIn&&dataIn.mileage&&data.mileage
+      ?"<div class='fr'><span class='fl'>Km parcourus</span><span class='fv'>"+(Number(data.mileage)-Number(dataIn.mileage))+" km</span></div>"
+      :"";
+    return "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><title>"+title+" — "+bk.client+"</title>"+
+      "<style>"+CSS+"</style></head><body>"+
+      "<div class='page'>"+
+      "<div class='hd'><div class='title'>"+title+"</div>"+
+      "<div class='sub'>CHANE-TO LOCATION · 0693 01 00 94 · chanetolocation@gmail.com</div></div>"+
+      "<div class='g2'>"+
+      "<div class='s'><div class='sh'>🚗 VÉHICULE</div><div class='sb'>"+
+      "<div class='fr'><span class='fl'>Désignation</span><span class='fv'>"+v.name+"</span></div>"+
+      "<div class='fr'><span class='fl'>Immatriculation</span><span class='fv'>"+v.plate+"</span></div>"+
+      "<div class='fr'><span class='fl'>Kilométrage</span><span class='fv'>"+(data.mileage||"—")+" km</span></div>"+
+      kmHTML+
+      "</div></div>"+
+      "<div class='s'><div class='sh'>👤 LOCATAIRE</div><div class='sb'>"+
+      "<div class='fr'><span class='fl'>Nom</span><span class='fv'>"+bk.client+"</span></div>"+
+      "<div class='fr'><span class='fl'>Téléphone</span><span class='fv'>"+(bk.phone||"—")+"</span></div>"+
+      "<div class='fr'><span class='fl'>"+dateLabel+"</span><span class='fv'>"+dateVal+"</span></div>"+
+      "</div></div></div>"+
+      "<div class='s'><div class='sh'>📊 NIVEAUX & PROPRETÉ</div><div class='sb'>"+
+      "<div class='fr'><span class='fl'>Carburant</span><span class='fv'>"+FL[data.fuel??2]+"</span></div>"+
+      buildGauge(data.fuel??2)+
+      "<div class='fr' style='margin-top:6px;'><span class='fl'>Propreté intérieure</span><span class='fv'>"+CL[data.cleanIn??4]+"</span></div>"+
+      "<div class='fr'><span class='fl'>Propreté extérieure</span><span class='fv'>"+CL[data.cleanOut??4]+"</span></div>"+
+      "</div></div>"+
+      "<div class='s'><div class='sh'>🗺 DOMMAGES CONSTATÉS</div><div class='sb'>"+dmgHTML+"</div></div>"+
+      notesHTML+photosHTML+
+      "<div class='g2'>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOUEUR</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>CHANE-TO LOCATION</div></div>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOCATAIRE</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>"+bk.client+" — Lu et approuvé</div></div>"+
+      "</div>"+
+      "<div class='ft'>CHANE-TO LOCATION · "+title+" · "+bk.client+" · "+dateVal+"</div>"+
+      "</div></body></html>";
+  }
+
+  function printIn(){
+    if(!selBooking||!selVehicle)return;
+    const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
+    const w=window.open("","_blank","width=950,height=1100");
+    if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
+  }
+
+  function printOut(){
+    if(!selBooking||!selVehicle)return;
+    const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
     const w=window.open("","_blank","width=950,height=1100");
     if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
   }
 
   return(
     <div>
-      <div style={{marginBottom:20}}>
+      <div style={{marginBottom:16}}>
         <div style={{fontSize:mob?18:22,fontWeight:700,color:"#F1F5F9"}}>🔍 État des lieux</div>
-        <div style={{fontSize:12,color:"#475569",marginTop:2}}>Entrée et sortie du véhicule</div>
+        <div style={{fontSize:12,color:"#475569",marginTop:2}}>Récupération et dépose du véhicule</div>
       </div>
 
       {/* Sélection réservation */}
       <div style={{background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?14:18,marginBottom:16}}>
         <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:12}}>📋 Sélectionner une réservation</div>
-        {bookings.length===0?<div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0"}}>Aucune réservation</div>:
-        <div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:200,overflowY:"auto"}}>
-          {[...bookings].sort((a,b)=>new Date(b.start)-new Date(a.start)).map(b=>{
-            const v=vehicles.find(v=>v.id===b.vehicleId),isSel=selBookingId===b.id;
-            return(<div key={b.id} onClick={()=>{setSelBookingId(b.id);setEdlIn({fuel:2,cleanIn:4,cleanOut:4,mileage:v?.mileage||"",notes:"",damages:[],photos:[]});setEdlOut({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});}}
-              style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:9,padding:"9px 11px",cursor:"pointer"}}>
-              <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
-              <div style={{fontSize:10,color:"#64748B",marginTop:1,display:"flex",alignItems:"center",gap:6}}>
-                <span style={{width:6,height:6,borderRadius:"50%",background:v?.color||"#475569",display:"inline-block",flexShrink:0}}/>
-                {v?.name||"?"} · {v?.plate||"?"}
-              </div>
-              <div style={{fontSize:10,color:"#475569",marginTop:1}}>📅 {fd(b.start)} → {fd(b.end)}</div>
-              {isSel&&<div style={{fontSize:10,color:"#3B82F6",fontWeight:600,marginTop:4}}>✓ Sélectionné</div>}
-            </div>);
-          })}
-        </div>}
+        {bookings.length===0
+          ?<div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0"}}>Aucune réservation</div>
+          :<div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:220,overflowY:"auto"}}>
+            {[...bookings].sort((a,b)=>new Date(b.start)-new Date(a.start)).map(b=>{
+              const vv=vehicles.find(v=>v.id===b.vehicleId),isSel=selBookingId===b.id;
+              return(
+                <div key={b.id} onClick={()=>{setSelBookingId(b.id);setEdlIn({fuel:2,cleanIn:4,cleanOut:4,mileage:vv?.mileage||"",notes:"",damages:[],photos:[]});setEdlOut({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});}}
+                  style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:9,padding:"9px 11px",cursor:"pointer"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
+                  <div style={{fontSize:10,color:"#64748B",marginTop:1,display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{width:6,height:6,borderRadius:"50%",background:vv?.color||"#475569",display:"inline-block",flexShrink:0}}/>
+                    {vv?.name||"?"} · {vv?.plate||"?"}
+                  </div>
+                  <div style={{fontSize:10,color:"#475569",marginTop:1}}>📅 {fd(b.start)} → {fd(b.end)}</div>
+                  {isSel&&<div style={{fontSize:10,color:"#3B82F6",fontWeight:600,marginTop:4}}>✓ Sélectionné</div>}
+                </div>
+              );
+            })}
+          </div>
+        }
       </div>
 
       {selBooking&&selVehicle&&(<>
-        {/* Info véhicule */}
-        <div style={{background:"linear-gradient(135deg,"+selVehicle.color+"15,"+selVehicle.color+"05)",border:"1.5px solid "+selVehicle.color+"40",borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+        {/* Bandeau véhicule */}
+        <div style={{background:"linear-gradient(135deg,"+selVehicle.color+"15,"+selVehicle.color+"05)",border:"1.5px solid "+selVehicle.color+"40",borderRadius:12,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:44,height:44,borderRadius:10,background:selVehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🚗</div>
           <div>
             <div style={{fontWeight:700,fontSize:14,color:"#F1F5F9"}}>{selVehicle.name} · {selVehicle.plate}</div>
@@ -479,16 +497,40 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
           </div>
         </div>
 
-        {/* Les deux sections EDL */}
-        <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:16,marginBottom:16}}>
-          <EdlSection title="PRISE EN CHARGE (début)" icon="🟢" data={edlIn} onChange={setEdlIn} mob={mob} BG={BG} S1={S1} S2={S2}/>
-          <EdlSection title="RESTITUTION (fin)" icon="🔴" data={edlOut} onChange={setEdlOut} mob={mob} BG={BG} S1={S1} S2={S2}/>
+        {/* ── PARTIE 1 : RÉCUPÉRATION ── */}
+        <div style={{background:"#10B98108",border:"2px solid #10B98140",borderRadius:14,padding:mob?14:20,marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:"#10B981"}}/>
+              <div style={{fontSize:15,fontWeight:800,color:"#10B981"}}>À LA RÉCUPÉRATION</div>
+              <div style={{fontSize:11,color:"#64748B"}}>Début — {fd(selBooking.start)}</div>
+            </div>
+            <button onClick={printIn} style={{background:"linear-gradient(135deg,#10B981,#059669)",border:"none",color:"#fff",padding:"8px 16px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+              <span>📥</span> PDF Récupération
+            </button>
+          </div>
+          <EdlSection title="" icon="" data={edlIn} onChange={setEdlIn} mob={mob} BG={BG} S1={S1} S2={S2}/>
+        </div>
+
+        {/* ── PARTIE 2 : DÉPOSE ── */}
+        <div style={{background:"#EF444408",border:"2px solid #EF444440",borderRadius:14,padding:mob?14:20,marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:"#EF4444"}}/>
+              <div style={{fontSize:15,fontWeight:800,color:"#EF4444"}}>À LA DÉPOSE</div>
+              <div style={{fontSize:11,color:"#64748B"}}>Fin — {fd(selBooking.end)}</div>
+            </div>
+            <button onClick={printOut} style={{background:"linear-gradient(135deg,#EF4444,#DC2626)",border:"none",color:"#fff",padding:"8px 16px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+              <span>📥</span> PDF Dépose
+            </button>
+          </div>
+          <EdlSection title="" icon="" data={edlOut} onChange={setEdlOut} mob={mob} BG={BG} S1={S1} S2={S2}/>
         </div>
 
         {/* Récap comparatif */}
-        {(edlIn.mileage&&edlOut.mileage)&&(
-          <div style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:"14px 16px",marginBottom:16}}>
-            <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>📊 Comparatif entrée / sortie</div>
+        {edlIn.mileage&&edlOut.mileage&&(
+          <div style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:"14px 16px"}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>📊 Comparatif récupération / dépose</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
               <div style={{background:BG,borderRadius:8,padding:"10px",textAlign:"center"}}>
                 <div style={{fontSize:10,color:"#64748B",marginBottom:3}}>KM PARCOURUS</div>
@@ -496,7 +538,7 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
               </div>
               <div style={{background:BG,borderRadius:8,padding:"10px",textAlign:"center"}}>
                 <div style={{fontSize:10,color:"#64748B",marginBottom:3}}>CARBURANT</div>
-                <div style={{fontSize:13,fontWeight:700,color:edlOut.fuel>=(edlIn.fuel??2)?"#10B981":"#EF4444"}}>{fuelLabels[edlIn.fuel??2]} → {fuelLabels[edlOut.fuel??2]}</div>
+                <div style={{fontSize:13,fontWeight:700,color:edlOut.fuel>=(edlIn.fuel??2)?"#10B981":"#EF4444"}}>{FL[edlIn.fuel??2]} → {FL[edlOut.fuel??2]}</div>
               </div>
               <div style={{background:BG,borderRadius:8,padding:"10px",textAlign:"center"}}>
                 <div style={{fontSize:10,color:"#64748B",marginBottom:3}}>DOMMAGES</div>
@@ -505,10 +547,6 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
             </div>
           </div>
         )}
-
-        <button onClick={printEdl} style={{width:"100%",background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"14px 20px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 20px rgba(59,130,246,.4)"}}>
-          <span style={{fontSize:16}}>📥</span> Exporter l'état des lieux (PDF 2 pages)
-        </button>
       </>)}
     </div>
   );
