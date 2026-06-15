@@ -538,13 +538,13 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
   function printIn(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
-    openPDFBlob(html,"EDL_Recuperation_"+bk.client.replace(/\s+/g,"_")+".html");
+    openPDFBlob(html,"EDL_Recuperation_"+selBooking.client.replace(/ /g,"_")+".html");
   }
 
   function printOut(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
-    openPDFBlob(html,"EDL_Depose_"+bk.client.replace(/\s+/g,"_")+".html");
+    openPDFBlob(html,"EDL_Depose_"+selBooking.client.replace(/ /g,"_")+".html");
   }
 
   return(
