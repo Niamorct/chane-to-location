@@ -15,7 +15,7 @@ const VC=["#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#EF4444","#06B6D4",
 const VE={Berline:"🚗",Citadine:"🚗",SUV:"🚙",Utilitaire:"🚐",Fourgon:"🚐",Minibus:"🚌",Cabriolet:"🚗",Autre:"🚗"};
 const EC=["Carburant","Entretien","Assurance","Réparation","Nettoyage","Péage","Amende","Autres"];
 const MFR=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-const CO={name:"Chane-To Location",address:"",phone:"0693 01 00 94",email:"",siret:"",rcs:""};
+const CO={name:"Chane-To Location",address:"712 rue de la gare, 97440 Saint-André, La Réunion",phone:"+262693010094",email:"chanetolocation@gmail.com",siret:"89512496400027",rcs:"895 124 964"};
 
 const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",mileage:r.mileage||"",fuel:r.fuel||"Essence"});
 const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence"});
@@ -1150,13 +1150,21 @@ export default function App(){
         <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"300px 1fr",gap:12,alignItems:"start"}}>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             <div style={card}>
-              <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>🏢 Société</div>
-              <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                <CF label="Nom" value={cco.name} onChange={v=>setCco({...cco,name:v})} placeholder="Chane-To Location"/>
-                <CF label="Adresse" value={cco.address} onChange={v=>setCco({...cco,address:v})} placeholder="Votre adresse"/>
-                <CF label="Téléphone" value={cco.phone} onChange={v=>setCco({...cco,phone:v})} placeholder="0693 01 00 94"/>
-                <CF label="Email" value={cco.email} onChange={v=>setCco({...cco,email:v})} placeholder="contact@..."/>
-                <CF label="SIRET" value={cco.siret} onChange={v=>setCco({...cco,siret:v})} placeholder="123 456 789..."/>
+              <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9",marginBottom:12}}>🏢 Ma société</div>
+              <div style={{display:"flex",flexDirection:"column",gap:0}}>
+                {[
+                  {l:"Nom",v:CO.name},
+                  {l:"Adresse",v:CO.address},
+                  {l:"Téléphone",v:CO.phone},
+                  {l:"Email",v:CO.email},
+                  {l:"SIRET",v:CO.siret},
+                  {l:"RCS",v:CO.rcs},
+                ].map(r=>(
+                  <div key={r.l} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"6px 0",borderBottom:"1px solid #1E2535"}}>
+                    <span style={{fontSize:10,color:"#475569",fontWeight:600,flexShrink:0,marginRight:8}}>{r.l}</span>
+                    <span style={{fontSize:11,color:"#E2E8F0",fontWeight:600,textAlign:"right"}}>{r.v}</span>
+                  </div>
+                ))}
               </div>
             </div>
             <div style={card}>
