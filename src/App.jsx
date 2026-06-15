@@ -466,9 +466,6 @@ ${(edlOut.photos||[]).length>0?`<div class="s"><div class="sh">📷 PHOTOS</div>
     if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
   }
 
-  const fuelLabels=["Vide","1/4","1/2","3/4","Plein"];
-  const cleanLabels=["Très sale","Sale","Moyen","Propre","Très propre"];
-
   return(
     <div>
       <div style={{marginBottom:20}}>
