@@ -333,149 +333,105 @@ export default function App(){
         </div>
 
         {/* Vue Jour */}
-        {vm==="day"&&(
+        {/* FILTRE ACTIF : même liste pour Jour ET Semaine */}
+        {spf&&(
           <>
-            {vehicles.length===0&&<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun véhicule. Ajoutez-en dans "Flotte".</div>}
-
-            {/* MODE FILTRE : liste des véhicules disponibles */}
-            {spf&&(
-              <>
-                {aip.length===0&&<div style={{...card,textAlign:"center",padding:"48px"}}>
-                  <div style={{fontSize:40,marginBottom:12}}>🔍</div>
-                  <div style={{fontSize:15,fontWeight:700,color:"#F1F5F9",marginBottom:6}}>Aucun véhicule disponible</div>
-                  <div style={{fontSize:12,color:"#475569"}}>du {fd(ps)} au {fd(pe)}</div>
-                </div>}
-                {aip.length>0&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",marginBottom:2}}>
-                    {aip.length} véhicule{aip.length>1?"s":""} disponible{aip.length>1?"s":""} · {fd(ps)} → {fd(pe)}
-                  </div>
-                  {aip.map(vehicle=>(
-                    <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:"linear-gradient(135deg,"+vehicle.color+"15,"+vehicle.color+"05)",border:"1.5px solid "+vehicle.color+"50",borderRadius:14,padding:mob?14:18,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
-                      {/* Icône */}
-                      <div style={{width:mob?48:56,height:mob?48:56,borderRadius:12,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:mob?22:26,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
-                      {/* Infos */}
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                          <div style={{fontWeight:700,fontSize:mob?14:15,color:"#F1F5F9"}}>{vehicle.name}</div>
-                          <span style={{background:"#10B98120",color:"#10B981",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,flexShrink:0}}>✓ Disponible</span>
-                        </div>
-                        <div style={{fontSize:11,color:"#475569",marginBottom:mob?6:4}}>{vehicle.plate} · {vehicle.type} · {vehicle.fuel||"—"}</div>
-                        <div style={{display:"flex",gap:mob?8:16,flexWrap:"wrap"}}>
-                          {vehicle.year&&<span style={{fontSize:11,color:"#64748B"}}>📅 {vehicle.year}</span>}
-                          {vehicle.mileage&&<span style={{fontSize:11,color:"#64748B"}}>🛣 {Number(vehicle.mileage).toLocaleString("fr-FR")} km</span>}
-                        </div>
-                      </div>
-                      {/* Action */}
-                      <div style={{flexShrink:0,background:"linear-gradient(135deg,#10B981,#3B82F6)",borderRadius:10,padding:mob?"8px 12px":"10px 16px",color:"#fff",fontSize:mob?11:12,fontWeight:700,textAlign:"center"}}>
-                        + Réserver
-                      </div>
+            {aip.length===0&&<div style={{...card,textAlign:"center",padding:"48px"}}>
+              <div style={{fontSize:40,marginBottom:12}}>🔍</div>
+              <div style={{fontSize:15,fontWeight:700,color:"#F1F5F9",marginBottom:6}}>Aucun véhicule disponible</div>
+              <div style={{fontSize:12,color:"#475569"}}>du {fd(ps)} au {fd(pe)}</div>
+            </div>}
+            {aip.length>0&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",marginBottom:2}}>
+                {aip.length} véhicule{aip.length>1?"s":""} disponible{aip.length>1?"s":""} · {fd(ps)} → {fd(pe)}
+              </div>
+              {aip.map(vehicle=>(
+                <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:"linear-gradient(135deg,"+vehicle.color+"15,"+vehicle.color+"05)",border:"1.5px solid "+vehicle.color+"50",borderRadius:14,padding:mob?14:18,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:mob?48:56,height:mob?48:56,borderRadius:12,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:mob?22:26,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                      <div style={{fontWeight:700,fontSize:mob?14:15,color:"#F1F5F9"}}>{vehicle.name}</div>
+                      <span style={{background:"#10B98120",color:"#10B981",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,flexShrink:0}}>✓ Disponible</span>
                     </div>
-                  ))}
-                </div>}
-              </>
-            )}
-
-            {/* MODE NORMAL : grille des véhicules */}
-            {!spf&&<div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(auto-fill,minmax(270px,1fr))",gap:10}}>
-              {dv.map(vehicle=>{
-                const bk=gbod(vehicle.id,selDate),isB=!!bk;
-                return(
-                  <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:isB?"linear-gradient(135deg,"+vehicle.color+"18,"+vehicle.color+"08)":S1,border:"1.5px solid "+(isB?vehicle.color+"60":S2),borderRadius:13,padding:mob?13:16,cursor:"pointer",position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:isB?"#F59E0B":"#10B981"}}/>
-                    <div style={{display:"flex",gap:9,alignItems:"flex-start",marginBottom:10}}>
-                      <div style={{width:36,height:36,borderRadius:9,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
-                      <div><div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{vehicle.name}</div><div style={{fontSize:10,color:"#475569",marginTop:1}}>{vehicle.plate} · {vehicle.type}</div></div>
+                    <div style={{fontSize:11,color:"#475569",marginBottom:mob?6:4}}>{vehicle.plate} · {vehicle.type} · {vehicle.fuel||"—"}</div>
+                    <div style={{display:"flex",gap:mob?8:16,flexWrap:"wrap"}}>
+                      {vehicle.year&&<span style={{fontSize:11,color:"#64748B"}}>📅 {vehicle.year}</span>}
+                      {vehicle.mileage&&<span style={{fontSize:11,color:"#64748B"}}>🛣 {Number(vehicle.mileage).toLocaleString("fr-FR")} km</span>}
                     </div>
-                    {isB?(
-                      <div style={{background:BG,borderRadius:8,padding:"9px 11px"}}>
-                        <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:3}}>👤 {bk.client}</div>
-                        {bk.phone&&<div style={{fontSize:10,color:"#64748B",marginBottom:2}}>📞 {bk.phone}</div>}
-                        <div style={{fontSize:10,color:"#64748B",marginBottom:5}}>📅 {fds(bk.start)} → {fds(bk.end)}</div>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                          <span style={{color:"#F59E0B",fontWeight:700,fontSize:13}}>{bk.rate} €/j</span>
-                          <span style={{fontSize:9,color:"#475569",background:S2,padding:"2px 6px",borderRadius:10}}>{gdb(bk.start,bk.end)}j · {bk.rate*gdb(bk.start,bk.end)} €</span>
-                        </div>
-                      </div>
-                    ):(
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{color:"#10B981",fontSize:12,fontWeight:600}}>✓ Disponible</span>
-                        <span style={{fontSize:11,color:"#334155",marginLeft:"auto"}}>+ Réserver</span>
-                      </div>
-                    )}
                   </div>
-                );
-              })}
+                  <div style={{flexShrink:0,background:"linear-gradient(135deg,#10B981,#3B82F6)",borderRadius:10,padding:mob?"8px 12px":"10px 16px",color:"#fff",fontSize:mob?11:12,fontWeight:700,textAlign:"center"}}>
+                    + Réserver
+                  </div>
+                </div>
+              ))}
             </div>}
           </>
         )}
 
-        {/* Vue Semaine */}
-        {vm==="week"&&(
-          <>
-            {/* MODE FILTRE : même liste que vue jour */}
-            {spf&&(
-              <>
-                {aip.length===0&&<div style={{...card,textAlign:"center",padding:"48px"}}>
-                  <div style={{fontSize:40,marginBottom:12}}>🔍</div>
-                  <div style={{fontSize:15,fontWeight:700,color:"#F1F5F9",marginBottom:6}}>Aucun véhicule disponible</div>
-                  <div style={{fontSize:12,color:"#475569"}}>du {fd(ps)} au {fd(pe)}</div>
-                </div>}
-                {aip.length>0&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",marginBottom:2}}>
-                    {aip.length} véhicule{aip.length>1?"s":""} disponible{aip.length>1?"s":""} · {fd(ps)} → {fd(pe)}
+        {/* VUE JOUR — filtre inactif */}
+        {!spf&&vm==="day"&&(
+          <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(auto-fill,minmax(270px,1fr))",gap:10}}>
+            {vehicles.length===0&&<div style={{...card,textAlign:"center",padding:"36px",color:"#475569",gridColumn:"1/-1"}}>Aucun véhicule. Ajoutez-en dans "Flotte".</div>}
+            {vehicles.map(vehicle=>{
+              const bk=gbod(vehicle.id,selDate),isB=!!bk;
+              return(
+                <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:isB?"linear-gradient(135deg,"+vehicle.color+"18,"+vehicle.color+"08)":S1,border:"1.5px solid "+(isB?vehicle.color+"60":S2),borderRadius:13,padding:mob?13:16,cursor:"pointer",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:isB?"#F59E0B":"#10B981"}}/>
+                  <div style={{display:"flex",gap:9,alignItems:"flex-start",marginBottom:10}}>
+                    <div style={{width:36,height:36,borderRadius:9,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
+                    <div><div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{vehicle.name}</div><div style={{fontSize:10,color:"#475569",marginTop:1}}>{vehicle.plate} · {vehicle.type}</div></div>
                   </div>
-                  {aip.map(vehicle=>(
-                    <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:"linear-gradient(135deg,"+vehicle.color+"15,"+vehicle.color+"05)",border:"1.5px solid "+vehicle.color+"50",borderRadius:14,padding:mob?14:18,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
-                      <div style={{width:mob?48:56,height:mob?48:56,borderRadius:12,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:mob?22:26,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                          <div style={{fontWeight:700,fontSize:mob?14:15,color:"#F1F5F9"}}>{vehicle.name}</div>
-                          <span style={{background:"#10B98120",color:"#10B981",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,flexShrink:0}}>✓ Disponible</span>
-                        </div>
-                        <div style={{fontSize:11,color:"#475569",marginBottom:mob?6:4}}>{vehicle.plate} · {vehicle.type} · {vehicle.fuel||"—"}</div>
-                        <div style={{display:"flex",gap:mob?8:16,flexWrap:"wrap"}}>
-                          {vehicle.year&&<span style={{fontSize:11,color:"#64748B"}}>📅 {vehicle.year}</span>}
-                          {vehicle.mileage&&<span style={{fontSize:11,color:"#64748B"}}>🛣 {Number(vehicle.mileage).toLocaleString("fr-FR")} km</span>}
-                        </div>
-                      </div>
-                      <div style={{flexShrink:0,background:"linear-gradient(135deg,#10B981,#3B82F6)",borderRadius:10,padding:mob?"8px 12px":"10px 16px",color:"#fff",fontSize:mob?11:12,fontWeight:700,textAlign:"center"}}>
-                        + Réserver
+                  {isB?(
+                    <div style={{background:BG,borderRadius:8,padding:"9px 11px"}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:3}}>👤 {bk.client}</div>
+                      {bk.phone&&<div style={{fontSize:10,color:"#64748B",marginBottom:2}}>📞 {bk.phone}</div>}
+                      <div style={{fontSize:10,color:"#64748B",marginBottom:5}}>📅 {fds(bk.start)} → {fds(bk.end)}</div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <span style={{color:"#F59E0B",fontWeight:700,fontSize:13}}>{bk.rate} €/j</span>
+                        <span style={{fontSize:9,color:"#475569",background:S2,padding:"2px 6px",borderRadius:10}}>{gdb(bk.start,bk.end)}j · {bk.rate*gdb(bk.start,bk.end)} €</span>
                       </div>
                     </div>
-                  ))}
-                </div>}
-              </>
-            )}
+                  ):(
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{color:"#10B981",fontSize:12,fontWeight:600}}>✓ Disponible</span>
+                      <span style={{fontSize:11,color:"#334155",marginLeft:"auto"}}>+ Réserver</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-            {/* MODE NORMAL : tableau semaine */}
-            {!spf&&<div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginLeft:mob?-14:0,marginRight:mob?-14:0,paddingLeft:mob?14:0,paddingRight:mob?14:0}}>
-              <div style={{minWidth:mob?500:780}}>
-                <div style={{display:"grid",gridTemplateColumns:mob?"70px repeat(7,1fr)":"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
-                  <div style={{padding:mob?"5px 4px":"7px 10px",background:S1,fontSize:mob?8:10,color:"#475569",fontWeight:600}}>{mob?"":"VÉHICULE"}</div>
-                  {wdates.map(date=>{const d=pd(date),isT=date===today,isS=date===selDate;return(
-                    <div key={date} onClick={()=>{setSelDate(date);setVm("day");}} style={{padding:mob?"4px 2px":"7px",background:isS?"#3B82F620":S1,textAlign:"center",cursor:"pointer",borderBottom:isS?"2px solid #3B82F6":"2px solid transparent"}}>
-                      <div style={{fontSize:mob?7:9,color:"#475569",fontWeight:600}}>{d.toLocaleDateString("fr-FR",{weekday:"short"}).toUpperCase()}</div>
-                      <div style={{fontSize:mob?12:14,fontWeight:700,color:isT?"#3B82F6":"#E2E8F0"}}>{d.getDate()}</div>
+        {/* VUE SEMAINE — filtre inactif */}
+        {!spf&&vm==="week"&&(
+          <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginLeft:mob?-14:0,marginRight:mob?-14:0,paddingLeft:mob?14:0,paddingRight:mob?14:0}}>
+            <div style={{minWidth:mob?500:780}}>
+              <div style={{display:"grid",gridTemplateColumns:mob?"70px repeat(7,1fr)":"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
+                <div style={{padding:mob?"5px 4px":"7px 10px",background:S1,fontSize:mob?8:10,color:"#475569",fontWeight:600}}>{mob?"":"VÉHICULE"}</div>
+                {wdates.map(date=>{const d=pd(date),isT=date===today,isS=date===selDate;return(
+                  <div key={date} onClick={()=>{setSelDate(date);setVm("day");}} style={{padding:mob?"4px 2px":"7px",background:isS?"#3B82F620":S1,textAlign:"center",cursor:"pointer",borderBottom:isS?"2px solid #3B82F6":"2px solid transparent"}}>
+                    <div style={{fontSize:mob?7:9,color:"#475569",fontWeight:600}}>{d.toLocaleDateString("fr-FR",{weekday:"short"}).toUpperCase()}</div>
+                    <div style={{fontSize:mob?12:14,fontWeight:700,color:isT?"#3B82F6":"#E2E8F0"}}>{d.getDate()}</div>
+                  </div>
+                );})}
+              </div>
+              {vehicles.map(v=>(
+                <div key={v.id} style={{display:"grid",gridTemplateColumns:mob?"70px repeat(7,1fr)":"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
+                  <div style={{background:S1,padding:mob?"5px 4px":"7px 10px",display:"flex",alignItems:"center",gap:mob?4:7,overflow:"hidden"}}>
+                    <div style={{width:mob?5:7,height:mob?5:7,borderRadius:"50%",background:v.color,flexShrink:0}}/>
+                    {!mob&&<div style={{fontSize:11,fontWeight:600,color:"#E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.name}</div>}
+                    {mob&&<div style={{fontSize:8,fontWeight:600,color:"#E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",lineHeight:1.2}}>{v.name.split(" ").slice(-1)[0]}</div>}
+                  </div>
+                  {wdates.map(date=>{const bk=gbod(v.id,date),isS=date===selDate;return(
+                    <div key={date} onClick={()=>openDetail(v.id,date)} style={{background:bk?v.color+"25":S1,border:"1px solid "+(isS?"#3B82F650":"transparent"),padding:mob?"3px 2px":"6px 8px",cursor:"pointer",minHeight:mob?40:48,position:"relative",overflow:"hidden"}}>
+                      {bk?(<><div style={{fontSize:mob?7:9,fontWeight:700,color:v.color,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{mob?bk.client.split(" ")[0]:bk.client}</div>{!mob&&<div style={{fontSize:8,color:"#64748B"}}>{bk.rate} €/j</div>}<div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:v.color,opacity:.7}}/></>):<div style={{color:S2,fontSize:mob?10:14,textAlign:"center",marginTop:mob?10:4}}>+</div>}
                     </div>
                   );})}
                 </div>
-                {vehicles.map(v=>(
-                  <div key={v.id} style={{display:"grid",gridTemplateColumns:mob?"70px repeat(7,1fr)":"155px repeat(7,1fr)",gap:1,marginBottom:1}}>
-                    <div style={{background:S1,padding:mob?"5px 4px":"7px 10px",display:"flex",alignItems:"center",gap:mob?4:7,overflow:"hidden"}}>
-                      <div style={{width:mob?5:7,height:mob?5:7,borderRadius:"50%",background:v.color,flexShrink:0}}/>
-                      {!mob&&<div style={{fontSize:11,fontWeight:600,color:"#E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.name}</div>}
-                      {mob&&<div style={{fontSize:8,fontWeight:600,color:"#E2E8F0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",lineHeight:1.2}}>{v.name.split(" ").slice(-1)[0]}</div>}
-                    </div>
-                    {wdates.map(date=>{const bk=gbod(v.id,date),isS=date===selDate;return(
-                      <div key={date} onClick={()=>openDetail(v.id,date)} style={{background:bk?v.color+"25":S1,border:"1px solid "+(isS?"#3B82F650":"transparent"),padding:mob?"3px 2px":"6px 8px",cursor:"pointer",minHeight:mob?40:48,position:"relative",overflow:"hidden"}}>
-                        {bk?(<><div style={{fontSize:mob?7:9,fontWeight:700,color:v.color,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{mob?bk.client.split(" ")[0]:bk.client}</div>{!mob&&<div style={{fontSize:8,color:"#64748B"}}>{bk.rate} €/j</div>}<div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:v.color,opacity:.7}}/></>):<div style={{color:S2,fontSize:mob?10:14,textAlign:"center",marginTop:mob?10:4}}>+</div>}
-                      </div>
-                    );})}
-                  </div>
-                ))}
-              </div>
-            </div>}
-          </>
+              ))}
+            </div>
+          </div>
         )}
       </div>}
 
