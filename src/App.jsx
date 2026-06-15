@@ -123,8 +123,8 @@ function cHTML(b,v,co){
 <div style="font-size:17pt;font-weight:900;">${grandTotal.toLocaleString("fr-FR")} €</div>
 <div style="font-size:8pt;opacity:.85;font-style:italic;margin-top:2px;">Soit : ${tw} euros</div>
 </div></div>
-${extraFees>0?`<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#92400e;"><strong>Détail frais additionnels :</strong> ${b.extraFeesNote||"Voir conditions"} — ${extraFees} €</div>`:""}
-${b.notes?`<div style="background:#f0f9ff;border:1px solid #0ea5e9;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#0369a1;text-align:center;font-weight:600;">📋 ${b.notes}</div>`:""}
+${extraFees>0?"<div style='background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#92400e;'><strong>Détail frais additionnels :</strong> "+b.extraFeesNote+" — "+extraFees+" €</div>":""}
+${b.notes?"<div style='background:#f0f9ff;border:1px solid #0ea5e9;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#0369a1;text-align:center;font-weight:600;'>📋 "+b.notes+"</div>":""}
 <div class="sg">
 <div class="si"><div class="st">SIGNATURE DU LOUEUR</div><div class="sl"></div><div class="sm">Lu et approuvé — ${co.name}</div><div class="sm">Cachet et signature</div></div>
 <div class="si"><div class="st">SIGNATURE DU LOCATAIRE</div><div class="sl"></div><div class="sm">Lu et approuvé — ${b.client}</div><div class="sm">Précéder de la mention manuscrite « Lu et approuvé »</div></div>
@@ -371,97 +371,72 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
   const fuelLabels=["Vide","1/4","1/2","3/4","Plein"];
   const cleanLabels=["Très sale","Sale","Moyen","Propre","Très propre"];
 
-  function printEdl(){
+  function buildGauge(val){
+    return "<div class='gauge'>"+Array(5).fill(0).map(function(_,i){return "<div class='g-cell "+(i<=val?"g-fill":"g-empty")+"'></div>";}).join("")+"</div>";
+  }
+  function buildEdlSection(label,bk,v,data,fuelLabels,cleanLabels,fd,dataIn){
+    const dmgList=(data.damages||[]).length===0?"<div style='color:#6b7280;font-size:9pt;'>Aucun dommage constaté</div>":"<div class='dmg-list'>"+data.damages.map(function(d){return "<span class='dmg-tag'>"+d+"</span>";}).join("")+"</div>";
+    const photoBlock=(data.photos||[]).length>0?"<div class='s'><div class='sh'>📷 PHOTOS</div><div class='sb'><div class='photos'>"+data.photos.map(function(p){return "<img class='photo' src='"+p.url+"' alt='photo'/>";}).join("")+"</div></div></div>":"";
+    const notesBlock=data.notes?"<div class='s'><div class='sh'>📝 OBSERVATIONS</div><div class='sb'><div style='font-size:9pt;'>"+data.notes+"</div></div></div>":"";
+    const kmBlock=dataIn&&dataIn.mileage&&data.mileage?"<div class='fr'><span class='fl'>Km parcourus</span><span class='fv'>"+(Number(data.mileage)-Number(dataIn.mileage))+" km</span></div>":"";
+    return "<div class='page'>"+
+      "<div class='hd'><div class='title'>ÉTAT DES LIEUX — "+label+"</div>"+
+      "<div style='font-size:8pt;color:#64748b;margin-top:4px;'>CHANE-TO LOCATION · 0693 01 00 94 · chanetolocation@gmail.com</div></div>"+
+      "<div class='g2'>"+
+      "<div class='s'><div class='sh'>🚗 VÉHICULE</div><div class='sb'>"+
+      "<div class='fr'><span class='fl'>Désignation</span><span class='fv'>"+v.name+"</span></div>"+
+      "<div class='fr'><span class='fl'>Immatriculation</span><span class='fv'>"+v.plate+"</span></div>"+
+      "<div class='fr'><span class='fl'>Kilométrage</span><span class='fv'>"+(data.mileage||"—")+" km</span></div>"+
+      kmBlock+
+      "</div></div>"+
+      "<div class='s'><div class='sh'>👤 LOCATAIRE</div><div class='sb'>"+
+      "<div class='fr'><span class='fl'>Nom</span><span class='fv'>"+bk.client+"</span></div>"+
+      "<div class='fr'><span class='fl'>Tél</span><span class='fv'>"+(bk.phone||"—")+"</span></div>"+
+      "<div class='fr'><span class='fl'>"+(label==="ENTRÉE"?"Début":"Fin")+" location</span><span class='fv'>"+(label==="ENTRÉE"?fd(bk.start):fd(bk.end))+"</span></div>"+
+      "</div></div></div>"+
+      "<div class='s'><div class='sh'>📊 NIVEAUX & PROPRETÉ</div><div class='sb'>"+
+      "<div class='fr'><span class='fl'>Carburant</span><span class='fv'>"+fuelLabels[data.fuel??2]+"</span></div>"+
+      buildGauge(data.fuel??2)+
+      "<div class='fr' style='margin-top:6px;'><span class='fl'>Propreté intérieure</span><span class='fv'>"+cleanLabels[data.cleanIn??4]+"</span></div>"+
+      "<div class='fr'><span class='fl'>Propreté extérieure</span><span class='fv'>"+cleanLabels[data.cleanOut??4]+"</span></div>"+
+      "</div></div>"+
+      "<div class='s'><div class='sh'>🗺 DOMMAGES CONSTATÉS</div><div class='sb'>"+dmgList+"</div></div>"+
+      notesBlock+photoBlock+
+      "<div class='g2'>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOUEUR</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>CHANE-TO LOCATION</div></div>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOCATAIRE</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>"+bk.client+" — Lu et approuvé</div></div>"+
+      "</div>"+
+      "<div class='ft'>CHANE-TO LOCATION · État des lieux de "+label.toLowerCase()+" · "+bk.client+" · "+(label==="ENTRÉE"?fd(bk.start):fd(bk.end))+"</div>"+
+      "</div>";
+  }
+    function printEdl(){
     const bk=selBooking,v=selVehicle;
     if(!bk||!v)return;
-    const html=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>État des lieux — ${bk.client}</title>
-<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10pt;}
-.page{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto;page-break-after:always;}
-.hd{border-bottom:3px solid #0F1117;padding-bottom:10px;margin-bottom:12px;}
-.title{font-size:16pt;font-weight:900;color:#0F1117;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;}
-.s{border:1px solid #d1d5db;border-radius:6px;overflow:hidden;margin-bottom:10px;}
-.sh{background:#0F1117;color:white;padding:5px 10px;font-size:8pt;font-weight:700;}
-.sb{padding:10px;}
-.fr{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:3px 0;}
-.fr:last-child{border:none;}
-.fl{font-size:8pt;color:#6b7280;font-weight:600;}
-.fv{font-size:9pt;color:#111827;font-weight:600;}
-.gauge{display:flex;gap:3px;margin-top:4px;}
-.g-cell{flex:1;height:16px;border-radius:3px;border:1px solid #d1d5db;}
-.g-fill{background:#3B82F6;}
-.g-empty{background:#f3f4f6;}
-.sig{border:1px solid #d1d5db;border-radius:5px;padding:10px;margin-top:10px;}
-.sl{border-bottom:1px solid #374151;height:40px;margin-bottom:5px;}
-.ft{font-size:7pt;color:#9ca3af;text-align:center;margin-top:10px;}
-.dmg-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
-.dmg-tag{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:2px 8px;font-size:8pt;color:#dc2626;}
-.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
-.photo{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #d1d5db;}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{page-break-after:always;}}</style></head><body>
-<div class="page">
-<div class="hd"><div class="title">ÉTAT DES LIEUX — ENTRÉE</div>
-<div style="font-size:8pt;color:#64748b;margin-top:4px;">CHANE-TO LOCATION · 0693 01 00 94 · chanetolocation@gmail.com</div></div>
-<div class="g2">
-<div class="s"><div class="sh">🚗 VÉHICULE</div><div class="sb">
-<div class="fr"><span class="fl">Désignation</span><span class="fv">${v.name}</span></div>
-<div class="fr"><span class="fl">Immatriculation</span><span class="fv">${v.plate}</span></div>
-<div class="fr"><span class="fl">Kilométrage</span><span class="fv">${edlIn.mileage||"—"} km</span></div>
-</div></div>
-<div class="s"><div class="sh">👤 LOCATAIRE</div><div class="sb">
-<div class="fr"><span class="fl">Nom</span><span class="fv">${bk.client}</span></div>
-<div class="fr"><span class="fl">Tél</span><span class="fv">${bk.phone||"—"}</span></div>
-<div class="fr"><span class="fl">Période</span><span class="fv">${fd(bk.start)} → ${fd(bk.end)}</span></div>
-</div></div></div>
-<div class="s"><div class="sh">📊 NIVEAUX & PROPRETÉ</div><div class="sb">
-<div class="fr"><span class="fl">Carburant</span><span class="fv">${fuelLabels[edlIn.fuel??2]}</span></div>
-<div class="gauge">${Array(5).fill(0).map((_,i)=>`<div class="g-cell ${i<=(edlIn.fuel??2)?'g-fill':'g-empty'}"></div>`).join("")}</div>
-<div class="fr" style="margin-top:6px;"><span class="fl">Propreté intérieure</span><span class="fv">${cleanLabels[edlIn.cleanIn??4]}</span></div>
-<div class="fr"><span class="fl">Propreté extérieure</span><span class="fv">${cleanLabels[edlIn.cleanOut??4]}</span></div>
-</div></div>
-<div class="s"><div class="sh">🗺 DOMMAGES CONSTATÉS</div><div class="sb">
-${(edlIn.damages||[]).length===0?'<div style="color:#6b7280;font-size:9pt;">Aucun dommage constaté</div>':'<div class="dmg-list">'+edlIn.damages.map(d=>`<span class="dmg-tag">${d}</span>`).join("")+'</div>'}
-</div></div>
-${(edlIn.notes)?`<div class="s"><div class="sh">📝 OBSERVATIONS</div><div class="sb"><div style="font-size:9pt;">${edlIn.notes}</div></div></div>`:""}
-${(edlIn.photos||[]).length>0?`<div class="s"><div class="sh">📷 PHOTOS</div><div class="sb"><div class="photos">${edlIn.photos.map(p=>`<img class="photo" src="${p.url}" alt="photo"/>`).join("")}</div></div></div>`:""}
-<div class="g2">
-<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOUEUR</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">CHANE-TO LOCATION</div></div>
-<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOCATAIRE</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">${bk.client} — Lu et approuvé</div></div>
-</div>
-<div class="ft">CHANE-TO LOCATION · État des lieux d'entrée · ${bk.client} · ${fd(bk.start)}</div>
-</div>
-<div class="page">
-<div class="hd"><div class="title">ÉTAT DES LIEUX — SORTIE</div>
-<div style="font-size:8pt;color:#64748b;margin-top:4px;">CHANE-TO LOCATION · 0693 01 00 94 · chanetolocation@gmail.com</div></div>
-<div class="g2">
-<div class="s"><div class="sh">🚗 VÉHICULE</div><div class="sb">
-<div class="fr"><span class="fl">Désignation</span><span class="fv">${v.name}</span></div>
-<div class="fr"><span class="fl">Immatriculation</span><span class="fv">${v.plate}</span></div>
-<div class="fr"><span class="fl">Kilométrage retour</span><span class="fv">${edlOut.mileage||"—"} km</span></div>
-${edlIn.mileage&&edlOut.mileage?`<div class="fr"><span class="fl">Km parcourus</span><span class="fv">${Number(edlOut.mileage)-Number(edlIn.mileage)} km</span></div>`:""}
-</div></div>
-<div class="s"><div class="sh">👤 LOCATAIRE</div><div class="sb">
-<div class="fr"><span class="fl">Nom</span><span class="fv">${bk.client}</span></div>
-<div class="fr"><span class="fl">Tél</span><span class="fv">${bk.phone||"—"}</span></div>
-<div class="fr"><span class="fl">Fin de location</span><span class="fv">${fd(bk.end)}</span></div>
-</div></div></div>
-<div class="s"><div class="sh">📊 NIVEAUX & PROPRETÉ AU RETOUR</div><div class="sb">
-<div class="fr"><span class="fl">Carburant</span><span class="fv">${fuelLabels[edlOut.fuel??2]}</span></div>
-<div class="gauge">${Array(5).fill(0).map((_,i)=>`<div class="g-cell ${i<=(edlOut.fuel??2)?'g-fill':'g-empty'}"></div>`).join("")}</div>
-<div class="fr" style="margin-top:6px;"><span class="fl">Propreté intérieure</span><span class="fv">${cleanLabels[edlOut.cleanIn??4]}</span></div>
-<div class="fr"><span class="fl">Propreté extérieure</span><span class="fv">${cleanLabels[edlOut.cleanOut??4]}</span></div>
-</div></div>
-<div class="s"><div class="sh">🗺 DOMMAGES CONSTATÉS AU RETOUR</div><div class="sb">
-${(edlOut.damages||[]).length===0?'<div style="color:#6b7280;font-size:9pt;">Aucun dommage constaté</div>':'<div class="dmg-list">'+edlOut.damages.map(d=>`<span class="dmg-tag">${d}</span>`).join("")+'</div>'}
-</div></div>
-${edlOut.notes?`<div class="s"><div class="sh">📝 OBSERVATIONS</div><div class="sb"><div style="font-size:9pt;">${edlOut.notes}</div></div></div>`:""}
-${(edlOut.photos||[]).length>0?`<div class="s"><div class="sh">📷 PHOTOS</div><div class="sb"><div class="photos">${edlOut.photos.map(p=>`<img class="photo" src="${p.url}" alt="photo"/>`).join("")}</div></div></div>`:""}
-<div class="g2">
-<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOUEUR</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">CHANE-TO LOCATION</div></div>
-<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOCATAIRE</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">${bk.client} — Lu et approuvé</div></div>
-</div>
-<div class="ft">CHANE-TO LOCATION · État des lieux de sortie · ${bk.client} · ${fd(bk.end)}</div>
-</div></body></html>`;
+    const html="<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><title>État des lieux — "+bk.client+"</title>"+
+    "<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10pt;}"+
+    ".page{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto;page-break-after:always;}"+
+    ".hd{border-bottom:3px solid #0F1117;padding-bottom:10px;margin-bottom:12px;}"+
+    ".title{font-size:16pt;font-weight:900;color:#0F1117;}"+
+    ".g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;}"+
+    ".s{border:1px solid #d1d5db;border-radius:6px;overflow:hidden;margin-bottom:10px;}"+
+    ".sh{background:#0F1117;color:white;padding:5px 10px;font-size:8pt;font-weight:700;}"+
+    ".sb{padding:10px;}"+
+    ".fr{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:3px 0;}"+
+    ".fr:last-child{border:none;}.fl{font-size:8pt;color:#6b7280;font-weight:600;}.fv{font-size:9pt;color:#111827;font-weight:600;}"+
+    ".gauge{display:flex;gap:3px;margin-top:4px;}.g-cell{flex:1;height:16px;border-radius:3px;border:1px solid #d1d5db;}"+
+    ".g-fill{background:#3B82F6;}.g-empty{background:#f3f4f6;}"+
+    ".sig{border:1px solid #d1d5db;border-radius:5px;padding:10px;margin-top:10px;}"+
+    ".sl{border-bottom:1px solid #374151;height:40px;margin-bottom:5px;}"+
+    ".ft{font-size:7pt;color:#9ca3af;text-align:center;margin-top:10px;}"+
+    ".dmg-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}"+
+    ".dmg-tag{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:2px 8px;font-size:8pt;color:#dc2626;}"+
+    ".photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}"+
+    ".photo{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #d1d5db;}"+
+    "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{page-break-after:always;}}"+
+    "</style></head><body>"+
+    buildEdlSection("ENTRÉE",bk,v,edlIn,fuelLabels,cleanLabels,fd)+
+    buildEdlSection("SORTIE",bk,v,edlOut,fuelLabels,cleanLabels,fd,edlIn)+
+    "</body></html>";
     const w=window.open("","_blank","width=950,height=1100");
     if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
   }
@@ -1126,7 +1101,7 @@ export default function App(){
         <EdlPage vehicles={vehicles} bookings={bookings} mob={mob} BG={BG} S1={S1} S2={S2} S3={S3} card={card} btnP={btnP} fd={fd} fds={fds}/>
       </div>}
 
-      {/* ── MODALS ── */}}
+      {/* ── MODALS ── */}
       {modal&&!dc?.type?.startsWith("v")&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",alignItems:mob?"flex-end":"center",justifyContent:"center",zIndex:250,padding:mob?0:16}} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
           <div style={{background:S1,borderRadius:mob?"18px 18px 0 0":"18px",width:"100%",maxWidth:mob?"100%":490,border:"1px solid "+S2,boxShadow:"0 20px 60px rgba(0,0,0,.7)",maxHeight:mob?"92vh":"88vh",overflowY:"auto"}}>
