@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 
 const SUPA_URL="https://lmtgoehaeepigauxeeor.supabase.co";
 const SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtdGdvZWhhZWVwaWdhdXhlZW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MDg0NTksImV4cCI6MjA5NzA4NDQ1OX0.c4RvAe0leTvcMHUzYoAeZX8F1-VtAbePaqBV-F89kbc";
@@ -329,9 +329,9 @@ function PhotoUpload({photos,onAdd,onRemove,label}){
 
 
 function SignatureCanvas({label,value,onChange,color="#3B82F6"}){
-  const canvasRef=React.useRef(null);
-  const drawing=React.useRef(false);
-  const lastPos=React.useRef(null);
+  const canvasRef=useRef(null);
+  const drawing=useRef(false);
+  const lastPos=useRef(null);
 
   function getPos(e,canvas){
     const r=canvas.getBoundingClientRect();
