@@ -256,30 +256,70 @@ export default function App(){
 
       {/* ── CALENDRIER ── */}
       {page==="calendar"&&<div style={pg}>
-        {/* CONTROLES CALENDRIER */}
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,flexWrap:"wrap"}}>
-          <button onClick={()=>setSelDate(ad(selDate,-1))} style={{background:"#1E2535",border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
-          <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{background:"#1E2535",border:"1px solid #2D3748",color:"#E2E8F0",padding:"7px 12px",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer",flexShrink:0}}/>
-          <button onClick={()=>setSelDate(ad(selDate,1))} style={{background:"#1E2535",border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
-          <button onClick={()=>setSelDate(today)} style={{background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"#1E2535",border:"none",color:"#fff",padding:"7px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600,flexShrink:0}}>Aujourd'hui</button>
+        {/* CONTROLES DESKTOP */}
+        {!mob&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+          <button onClick={()=>setSelDate(ad(selDate,-1))} style={{background:S2,border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
+          <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"7px 12px",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer",flexShrink:0}}/>
+          <button onClick={()=>setSelDate(ad(selDate,1))} style={{background:S2,border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
+          <button onClick={()=>setSelDate(today)} style={{background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600,flexShrink:0}}>Aujourd'hui</button>
           <button onClick={openNewR} style={{background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,flexShrink:0}}>＋ Nouvelle réservation</button>
-          <div style={{marginLeft:"auto",display:"flex",gap:3,background:"#1E2535",borderRadius:10,padding:4,flexShrink:0}}>
+          <div style={{marginLeft:"auto",display:"flex",gap:3,background:S2,borderRadius:10,padding:4,flexShrink:0}}>
             <button onClick={()=>setVm("day")} style={{background:vm==="day"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="day"?"#fff":"#94A3B8",padding:"7px 20px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}>📅 Jour</button>
             <button onClick={()=>setVm("week")} style={{background:vm==="week"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="week"?"#fff":"#94A3B8",padding:"7px 20px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}>📆 Semaine</button>
           </div>
-        </div>
+        </div>}
 
-        {/* Filtre période */}
-        <div style={{background:S1,border:"1.5px solid "+(spf?"#3B82F6":S2),borderRadius:10,padding:"9px 12px",marginBottom:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <button onClick={()=>setSpf(p=>!p)} style={{...btnS,background:spf?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"",color:spf?"#fff":"#94A3B8",fontSize:12}}>🔍 Disponibilité</button>
-            {spf&&<>
-              <div style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:11,color:"#64748B"}}>Du</span><input type="date" value={ps} onChange={e=>setPs(e.target.value)} style={{background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"4px 7px",borderRadius:6,fontSize:11}}/></div>
-              <div style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:11,color:"#64748B"}}>Au</span><input type="date" value={pe} onChange={e=>setPe(e.target.value)} style={{background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"4px 7px",borderRadius:6,fontSize:11}}/></div>
-              <span style={{fontSize:11,color:"#3B82F6",fontWeight:600}}>{aip.length}/{vehicles.length} dispo</span>
-              <button onClick={()=>setSpf(false)} style={{...btnS,padding:"4px 8px",fontSize:11}}>✕</button>
-            </>}
+        {/* CONTROLES MOBILE */}
+        {mob&&<div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+          {/* Ligne 1 : navigation date */}
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <button onClick={()=>setSelDate(ad(selDate,-1))} style={{background:S2,border:"none",color:"#E2E8F0",width:44,height:44,borderRadius:10,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
+            <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{flex:1,background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"11px 12px",borderRadius:10,fontSize:15,fontWeight:700,cursor:"pointer",textAlign:"center"}}/>
+            <button onClick={()=>setSelDate(ad(selDate,1))} style={{background:S2,border:"none",color:"#E2E8F0",width:44,height:44,borderRadius:10,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
           </div>
+          {/* Ligne 2 : Aujourd'hui + Nouvelle réservation */}
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setSelDate(today)} style={{flex:1,background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"12px 0",borderRadius:10,cursor:"pointer",fontSize:14,fontWeight:700,textAlign:"center"}}>Aujourd'hui</button>
+            <button onClick={openNewR} style={{flex:2,background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"12px 0",borderRadius:10,cursor:"pointer",fontSize:14,fontWeight:700,textAlign:"center"}}>＋ Nouvelle réservation</button>
+          </div>
+          {/* Ligne 3 : Jour / Semaine */}
+          <div style={{display:"flex",gap:0,background:S2,borderRadius:10,padding:4}}>
+            <button onClick={()=>setVm("day")} style={{flex:1,background:vm==="day"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="day"?"#fff":"#64748B",padding:"10px 0",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>📅 Jour</button>
+            <button onClick={()=>setVm("week")} style={{flex:1,background:vm==="week"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="week"?"#fff":"#64748B",padding:"10px 0",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>📆 Semaine</button>
+          </div>
+        </div>}
+
+        {/* Filtre disponibilité — esthétique amélioré */}
+        <div style={{marginBottom:14}}>
+          {/* Bouton centré quand fermé */}
+          {!spf&&<div style={{display:"flex",justifyContent:"center"}}>
+            <button onClick={()=>setSpf(true)} style={{background:"linear-gradient(135deg,#1E2535,#2D3748)",border:"1px solid #3B82F630",color:"#94A3B8",padding:"10px 32px",borderRadius:20,cursor:"pointer",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:8,boxShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>
+              <span style={{fontSize:14}}>🔍</span> Filtre de disponibilité
+            </button>
+          </div>}
+          {/* Panel ouvert */}
+          {spf&&<div style={{background:"linear-gradient(135deg,#161B27,#1E2535)",border:"1.5px solid #3B82F660",borderRadius:14,padding:"14px 16px",boxShadow:"0 4px 20px rgba(59,130,246,0.15)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:14}}>🔍</span>
+                <span style={{fontSize:13,fontWeight:700,color:"#3B82F6"}}>Filtre de disponibilité</span>
+                <span style={{background:"#3B82F620",border:"1px solid #3B82F640",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#3B82F6",fontWeight:600}}>{aip.length}/{vehicles.length} dispo</span>
+              </div>
+              <button onClick={()=>setSpf(false)} style={{background:"#EF444420",border:"1px solid #EF444430",color:"#EF4444",width:26,height:26,borderRadius:6,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:mob?8:16,flexWrap:mob?"wrap":"nowrap"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
+                <span style={{fontSize:12,color:"#64748B",fontWeight:600,flexShrink:0}}>Du</span>
+                <input type="date" value={ps} onChange={e=>setPs(e.target.value)} style={{flex:1,background:"#0F1117",border:"1px solid #2D3748",color:"#E2E8F0",padding:"8px 10px",borderRadius:8,fontSize:13,minWidth:0}}/>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
+                <span style={{fontSize:12,color:"#64748B",fontWeight:600,flexShrink:0}}>Au</span>
+                <input type="date" value={pe} onChange={e=>setPe(e.target.value)} style={{flex:1,background:"#0F1117",border:"1px solid #2D3748",color:"#E2E8F0",padding:"8px 10px",borderRadius:8,fontSize:13,minWidth:0}}/>
+              </div>
+              {ps&&pe&&pd(pe)>=pd(ps)&&<span style={{background:"#3B82F620",border:"1px solid #3B82F640",borderRadius:20,padding:"4px 12px",fontSize:12,color:"#3B82F6",fontWeight:700,flexShrink:0,whiteSpace:"nowrap"}}>{gdb(ps,pe)}j</span>}
+            </div>
+            {aip.length===0&&<div style={{marginTop:10,background:"#F59E0B15",border:"1px solid #F59E0B30",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#F59E0B",textAlign:"center"}}>⚠️ Aucun véhicule disponible sur cette période</div>}
+          </div>}
         </div>
 
         {/* Stats */}
