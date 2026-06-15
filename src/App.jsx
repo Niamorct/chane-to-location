@@ -126,8 +126,8 @@ function cHTML(b,v,co){
 ${extraFees>0?"<div style='background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#92400e;'><strong>Détail frais additionnels :</strong> "+b.extraFeesNote+" — "+extraFees+" €</div>":""}
 ${b.notes?"<div style='background:#f0f9ff;border:1px solid #0ea5e9;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#0369a1;text-align:center;font-weight:600;'>📋 "+b.notes+"</div>":""}
 <div class="sg">
-<div class="si"><div class="st">SIGNATURE DU LOUEUR</div><div class="sl"></div><div class="sm">Lu et approuvé — ${co.name}</div><div class="sm">Cachet et signature</div></div>
-<div class="si"><div class="st">SIGNATURE DU LOCATAIRE</div><div class="sl"></div><div class="sm">Lu et approuvé — ${b.client}</div><div class="sm">Précéder de la mention manuscrite « Lu et approuvé »</div></div>
+<div class="si"><div class="st">SIGNATURE DU LOUEUR</div>${b.sigLoueur?`<img src="${b.sigLoueur}" style="max-height:60px;display:block;margin:4px 0;"/>`:"<div class='sl'></div>"}<div class="sm">Lu et approuvé — ${co.name}</div><div class="sm">Cachet et signature</div></div>
+<div class="si"><div class="st">SIGNATURE DU LOCATAIRE</div>${b.sigLocataire?`<img src="${b.sigLocataire}" style="max-height:60px;display:block;margin:4px 0;"/>`:"<div class='sl'></div>"}<div class="sm">Lu et approuvé — ${b.client}</div><div class="sm">Précéder de la mention manuscrite « Lu et approuvé »</div></div>
 </div>
 <div class="ft">${co.name} — ${co.phone} — chanetolocation@gmail.com | Contrat ${cn} — ${ts} | Les Conditions Générales figurent en page suivante</div>
 </div>`;
@@ -327,6 +327,82 @@ function PhotoUpload({photos,onAdd,onRemove,label}){
   );
 }
 
+
+function SignatureCanvas({label,value,onChange,color="#3B82F6"}){
+  const canvasRef=React.useRef(null);
+  const drawing=React.useRef(false);
+  const lastPos=React.useRef(null);
+
+  function getPos(e,canvas){
+    const r=canvas.getBoundingClientRect();
+    if(e.touches){
+      return{x:(e.touches[0].clientX-r.left)*(canvas.width/r.width),y:(e.touches[0].clientY-r.top)*(canvas.height/r.height)};
+    }
+    return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)};
+  }
+
+  function startDraw(e){
+    e.preventDefault();
+    const canvas=canvasRef.current;
+    if(!canvas)return;
+    drawing.current=true;
+    lastPos.current=getPos(e,canvas);
+  }
+
+  function draw(e){
+    e.preventDefault();
+    if(!drawing.current)return;
+    const canvas=canvasRef.current;
+    if(!canvas)return;
+    const ctx=canvas.getContext("2d");
+    const pos=getPos(e,canvas);
+    ctx.beginPath();
+    ctx.moveTo(lastPos.current.x,lastPos.current.y);
+    ctx.lineTo(pos.x,pos.y);
+    ctx.strokeStyle=color;
+    ctx.lineWidth=2.5;
+    ctx.lineCap="round";
+    ctx.lineJoin="round";
+    ctx.stroke();
+    lastPos.current=pos;
+    onChange(canvas.toDataURL());
+  }
+
+  function endDraw(){
+    drawing.current=false;
+    lastPos.current=null;
+  }
+
+  function clear(){
+    const canvas=canvasRef.current;
+    if(!canvas)return;
+    const ctx=canvas.getContext("2d");
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    onChange(null);
+  }
+
+  return(
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+        <div style={{fontSize:11,color:"#94A3B8",fontWeight:600}}>{label}</div>
+        {value&&<button onClick={clear} style={{background:"#EF444420",border:"1px solid #EF444430",color:"#EF4444",padding:"3px 10px",borderRadius:6,cursor:"pointer",fontSize:10,fontWeight:600}}>✕ Effacer</button>}
+      </div>
+      <div style={{border:"1.5px solid "+(value?"#3B82F6":"#2D3748"),borderRadius:8,background:"#0F1117",overflow:"hidden",position:"relative"}}>
+        <canvas
+          ref={canvasRef}
+          width={400} height={120}
+          style={{display:"block",width:"100%",height:120,cursor:"crosshair",touchAction:"none"}}
+          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+          onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
+        />
+        {!value&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
+          <span style={{fontSize:12,color:"#334155",fontStyle:"italic"}}>✍️ Signez ici</span>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
 function EdlSection({title,icon,data,onChange,mob,BG,S1,S2}){
   const toggleDamage=zone=>{
     const cur=data.damages||[];
@@ -356,14 +432,18 @@ function EdlSection({title,icon,data,onChange,mob,BG,S1,S2}){
         </div>
       </div>
       <PhotoUpload photos={data.photos||[]} label="📷 Photos" onAdd={p=>onChange({...data,photos:[...(data.photos||[]),p]})} onRemove={i=>onChange({...data,photos:(data.photos||[]).filter((_,idx)=>idx!==i)})}/>
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:12,marginTop:8}}>
+        <SignatureCanvas label="✍️ Signature du loueur" value={data.sigLoueur||null} onChange={v=>onChange({...data,sigLoueur:v})} color="#3B82F6"/>
+        <SignatureCanvas label="✍️ Signature du locataire" value={data.sigLocataire||null} onChange={v=>onChange({...data,sigLocataire:v})} color="#10B981"/>
+      </div>
     </div>
   );
 }
 
 function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
   const[selBookingId,setSelBookingId]=useState(null);
-  const[edlIn,setEdlIn]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});
-  const[edlOut,setEdlOut]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});
+  const[edlIn,setEdlIn]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[],sigLoueur:null,sigLocataire:null});
+  const[edlOut,setEdlOut]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[],sigLoueur:null,sigLocataire:null});
 
   const selBooking=bookings.find(b=>b.id===selBookingId);
   const selVehicle=selBooking?vehicles.find(v=>v.id===selBooking.vehicleId):null;
@@ -434,8 +514,8 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
       "<div class='s'><div class='sh'>🗺 DOMMAGES CONSTATÉS</div><div class='sb'>"+dmgHTML+"</div></div>"+
       notesHTML+photosHTML+
       "<div class='g2'>"+
-      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOUEUR</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>CHANE-TO LOCATION</div></div>"+
-      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOCATAIRE</div><div class='sl'></div><div style='font-size:7pt;color:#6b7280;'>"+bk.client+" — Lu et approuvé</div></div>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOUEUR</div>"+(data.sigLoueur?"<img src='"+data.sigLoueur+"' style='max-height:60px;display:block;margin:4px 0;'/>":"<div class='sl'></div>")+"<div style='font-size:7pt;color:#6b7280;'>CHANE-TO LOCATION</div></div>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOCATAIRE</div>"+(data.sigLocataire?"<img src='"+data.sigLocataire+"' style='max-height:60px;display:block;margin:4px 0;'/>":"<div class='sl'></div>")+"<div style='font-size:7pt;color:#6b7280;'>"+bk.client+" — Lu et approuvé</div></div>"+
       "</div>"+
       "<div class='ft'>CHANE-TO LOCATION · "+title+" · "+bk.client+" · "+dateVal+"</div>"+
       "</div></body></html>";
@@ -581,7 +661,7 @@ export default function App(){
   const[spf,setSpf]=useState(false);
   const[cbid,setCbid]=useState(null);
   const[cco,setCco]=useState({...CO});
-  const[cex,setCex]=useState({email:"",address:"",licenseNum:"",deposit:0,extraFees:0,extraFeesNote:""});
+  const[cex,setCex]=useState({email:"",address:"",licenseNum:"",deposit:0,extraFees:0,extraFeesNote:"",sigLoueur:null,sigLocataire:null});
 
   const loadAll=useCallback(async()=>{
     setLoading(true);
@@ -1123,6 +1203,13 @@ export default function App(){
                     <div style={{background:BG,borderRadius:8,padding:"9px"}}><div style={{fontSize:9,color:"#F59E0B",marginBottom:2,fontWeight:700}}>FRAIS ADDITIONNELS (€)</div><input type="number" value={cex.extraFees||0} onChange={e=>setCex({...cex,extraFees:Number(e.target.value)})} style={{width:"100%",background:"transparent",border:"none",color:"#F59E0B",fontSize:15,fontWeight:800,outline:"none"}}/></div>
                     <div style={{background:BG,borderRadius:8,padding:"9px",gridColumn:"1/-1"}}><div style={{fontSize:9,color:"#64748B",marginBottom:4}}>DÉTAIL FRAIS ADDITIONNELS</div><input value={cex.extraFeesNote||""} onChange={e=>setCex({...cex,extraFeesNote:e.target.value})} placeholder="Ex: Dépôt aéroport, nettoyage, retard..." style={{width:"100%",background:"transparent",border:"none",color:"#E2E8F0",fontSize:12,outline:"none"}}/></div>
                     <div style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",borderRadius:8,padding:"9px",gridColumn:"1/-1",textAlign:"center"}}><div style={{fontSize:9,color:"rgba(255,255,255,0.7)",marginBottom:2}}>TOTAL GÉNÉRAL (location + frais)</div><div style={{fontSize:18,fontWeight:900,color:"#fff"}}>{((scb.rate*gdb(scb.start,scb.end))+(Number(cex.extraFees)||0)).toLocaleString("fr-FR")} €</div></div>
+                  </div>
+                </div>
+                <div style={{background:"#0F1117",border:"1px solid #1E2535",borderRadius:12,padding:"14px 16px"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>✍️ Signatures</div>
+                  <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:12}}>
+                    <SignatureCanvas label="Signature du loueur" value={cex.sigLoueur||null} onChange={v=>setCex({...cex,sigLoueur:v})} color="#3B82F6"/>
+                    <SignatureCanvas label="Signature du locataire" value={cex.sigLocataire||null} onChange={v=>setCex({...cex,sigLocataire:v})} color="#10B981"/>
                   </div>
                 </div>
                 <button onClick={()=>exportPDF({...scb,...cex},scv)} style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"13px 20px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:"0 4px 20px rgba(59,130,246,.4)"}}>
