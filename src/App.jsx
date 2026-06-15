@@ -203,13 +203,13 @@ export default function App(){
 
   // Styles
   const BG="#0F1117",S1="#161B27",S2="#1E2535",S3="#2D3748";
-  const HEADER_H=mob?54:64;
+  
   const pg=mob?{padding:"12px 14px",paddingTop:66,paddingBottom:88}:{maxWidth:1240,margin:"0 auto",padding:"20px 32px"};
   const card={background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?13:18};
   const btnP={background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:mob?"7px 12px":"9px 18px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:mob?12:13};
   const btnS={background:S2,border:"none",color:"#94A3B8",padding:"7px 14px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600};
 
-  if(loading)return<div style={{minHeight:"100vh",minHeight:"100dvh",background:BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><img src={LOGO} alt="" style={{width:80,height:80,objectFit:"contain",filter:"brightness(10)"}}/><div style={{color:"#F1F5F9",fontSize:17,fontWeight:700}}>Chane-To Location</div><div style={{display:"flex",alignItems:"center",gap:8,color:"#475569",fontSize:13}}><div style={{width:16,height:16,border:"2px solid "+S2,borderTopColor:"#3B82F6",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>Chargement…</div></div>;
+  if(loading)return<div style={{minHeight:"100dvh",background:BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><img src={LOGO} alt="" style={{width:80,height:80,objectFit:"contain",filter:"brightness(10)"}}/><div style={{color:"#F1F5F9",fontSize:17,fontWeight:700}}>Chane-To Location</div><div style={{display:"flex",alignItems:"center",gap:8,color:"#475569",fontSize:13}}><div style={{width:16,height:16,border:"2px solid "+S2,borderTopColor:"#3B82F6",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>Chargement…</div></div>;
 
   const TABS=[{id:"calendar",icon:"📅",label:"Calendrier"},{id:"fleet",icon:"🚗",label:"Flotte"},{id:"treasury",icon:"💰",label:"Trésorerie"},{id:"contracts",icon:"📄",label:"Contrats"}];
 
