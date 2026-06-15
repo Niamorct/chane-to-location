@@ -334,38 +334,79 @@ export default function App(){
 
         {/* Vue Jour */}
         {vm==="day"&&(
-          <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(auto-fill,minmax(270px,1fr))",gap:10}}>
-            {vehicles.length===0&&<div style={{...card,textAlign:"center",padding:"36px",color:"#475569",gridColumn:"1/-1"}}>Aucun véhicule. Ajoutez-en dans "Flotte".</div>}
-            {spf&&aip.length===0&&vehicles.length>0&&<div style={{...card,textAlign:"center",padding:"36px",gridColumn:"1/-1"}}><div style={{fontSize:32,marginBottom:8}}>🔍</div><div style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>Aucun véhicule disponible</div></div>}
-            {dv.map(vehicle=>{
-              const bk=gbod(vehicle.id,selDate),isB=spf?false:!!bk;
-              return(
-                <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:isB?"linear-gradient(135deg,"+vehicle.color+"18,"+vehicle.color+"08)":S1,border:"1.5px solid "+(isB?vehicle.color+"60":S2),borderRadius:13,padding:mob?13:16,cursor:"pointer",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:isB?"#F59E0B":"#10B981"}}/>
-                  <div style={{display:"flex",gap:9,alignItems:"flex-start",marginBottom:10}}>
-                    <div style={{width:36,height:36,borderRadius:9,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
-                    <div><div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{vehicle.name}</div><div style={{fontSize:10,color:"#475569",marginTop:1}}>{vehicle.plate} · {vehicle.type}</div></div>
+          <>
+            {vehicles.length===0&&<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun véhicule. Ajoutez-en dans "Flotte".</div>}
+
+            {/* MODE FILTRE : liste des véhicules disponibles */}
+            {spf&&(
+              <>
+                {aip.length===0&&<div style={{...card,textAlign:"center",padding:"48px"}}>
+                  <div style={{fontSize:40,marginBottom:12}}>🔍</div>
+                  <div style={{fontSize:15,fontWeight:700,color:"#F1F5F9",marginBottom:6}}>Aucun véhicule disponible</div>
+                  <div style={{fontSize:12,color:"#475569"}}>du {fd(ps)} au {fd(pe)}</div>
+                </div>}
+                {aip.length>0&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#94A3B8",marginBottom:2}}>
+                    {aip.length} véhicule{aip.length>1?"s":""} disponible{aip.length>1?"s":""} · {fd(ps)} → {fd(pe)}
                   </div>
-                  {isB?(
-                    <div style={{background:BG,borderRadius:8,padding:"9px 11px"}}>
-                      <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:3}}>👤 {bk.client}</div>
-                      {bk.phone&&<div style={{fontSize:10,color:"#64748B",marginBottom:2}}>📞 {bk.phone}</div>}
-                      <div style={{fontSize:10,color:"#64748B",marginBottom:5}}>📅 {fds(bk.start)} → {fds(bk.end)}</div>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                        <span style={{color:"#F59E0B",fontWeight:700,fontSize:13}}>{bk.rate} €/j</span>
-                        <span style={{fontSize:9,color:"#475569",background:S2,padding:"2px 6px",borderRadius:10}}>{gdb(bk.start,bk.end)}j · {bk.rate*gdb(bk.start,bk.end)} €</span>
+                  {aip.map(vehicle=>(
+                    <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:"linear-gradient(135deg,"+vehicle.color+"15,"+vehicle.color+"05)",border:"1.5px solid "+vehicle.color+"50",borderRadius:14,padding:mob?14:18,cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                      {/* Icône */}
+                      <div style={{width:mob?48:56,height:mob?48:56,borderRadius:12,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:mob?22:26,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
+                      {/* Infos */}
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                          <div style={{fontWeight:700,fontSize:mob?14:15,color:"#F1F5F9"}}>{vehicle.name}</div>
+                          <span style={{background:"#10B98120",color:"#10B981",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,flexShrink:0}}>✓ Disponible</span>
+                        </div>
+                        <div style={{fontSize:11,color:"#475569",marginBottom:mob?6:4}}>{vehicle.plate} · {vehicle.type} · {vehicle.fuel||"—"}</div>
+                        <div style={{display:"flex",gap:mob?8:16,flexWrap:"wrap"}}>
+                          {vehicle.year&&<span style={{fontSize:11,color:"#64748B"}}>📅 {vehicle.year}</span>}
+                          {vehicle.mileage&&<span style={{fontSize:11,color:"#64748B"}}>🛣 {Number(vehicle.mileage).toLocaleString("fr-FR")} km</span>}
+                        </div>
+                      </div>
+                      {/* Action */}
+                      <div style={{flexShrink:0,background:"linear-gradient(135deg,#10B981,#3B82F6)",borderRadius:10,padding:mob?"8px 12px":"10px 16px",color:"#fff",fontSize:mob?11:12,fontWeight:700,textAlign:"center"}}>
+                        + Réserver
                       </div>
                     </div>
-                  ):(
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <span style={{color:"#10B981",fontSize:12,fontWeight:600}}>✓ Disponible</span>
-                      <span style={{fontSize:11,color:"#334155",marginLeft:"auto"}}>+ Réserver</span>
+                  ))}
+                </div>}
+              </>
+            )}
+
+            {/* MODE NORMAL : grille des véhicules */}
+            {!spf&&<div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(auto-fill,minmax(270px,1fr))",gap:10}}>
+              {dv.map(vehicle=>{
+                const bk=gbod(vehicle.id,selDate),isB=!!bk;
+                return(
+                  <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:isB?"linear-gradient(135deg,"+vehicle.color+"18,"+vehicle.color+"08)":S1,border:"1.5px solid "+(isB?vehicle.color+"60":S2),borderRadius:13,padding:mob?13:16,cursor:"pointer",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:isB?"#F59E0B":"#10B981"}}/>
+                    <div style={{display:"flex",gap:9,alignItems:"flex-start",marginBottom:10}}>
+                      <div style={{width:36,height:36,borderRadius:9,background:vehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{VE[vehicle.type]||"🚗"}</div>
+                      <div><div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{vehicle.name}</div><div style={{fontSize:10,color:"#475569",marginTop:1}}>{vehicle.plate} · {vehicle.type}</div></div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                    {isB?(
+                      <div style={{background:BG,borderRadius:8,padding:"9px 11px"}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:3}}>👤 {bk.client}</div>
+                        {bk.phone&&<div style={{fontSize:10,color:"#64748B",marginBottom:2}}>📞 {bk.phone}</div>}
+                        <div style={{fontSize:10,color:"#64748B",marginBottom:5}}>📅 {fds(bk.start)} → {fds(bk.end)}</div>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <span style={{color:"#F59E0B",fontWeight:700,fontSize:13}}>{bk.rate} €/j</span>
+                          <span style={{fontSize:9,color:"#475569",background:S2,padding:"2px 6px",borderRadius:10}}>{gdb(bk.start,bk.end)}j · {bk.rate*gdb(bk.start,bk.end)} €</span>
+                        </div>
+                      </div>
+                    ):(
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{color:"#10B981",fontSize:12,fontWeight:600}}>✓ Disponible</span>
+                        <span style={{fontSize:11,color:"#334155",marginLeft:"auto"}}>+ Réserver</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>}
+          </>
         )}
 
         {/* Vue Semaine */}
