@@ -203,7 +203,8 @@ export default function App(){
 
   // Styles
   const BG="#0F1117",S1="#161B27",S2="#1E2535",S3="#2D3748";
-  const pg=mob?{padding:"12px 14px",paddingBottom:80}:{maxWidth:1240,margin:"0 auto",padding:"20px 32px"};
+  const HEADER_H=mob?54:64;
+  const pg=mob?{padding:"12px 14px",paddingTop:16,paddingBottom:88}:{maxWidth:1240,margin:"0 auto",padding:"20px 32px"};
   const card={background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?13:18};
   const btnP={background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:mob?"7px 12px":"9px 18px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:mob?12:13};
   const btnS={background:S2,border:"none",color:"#94A3B8",padding:"7px 14px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600};
@@ -245,19 +246,44 @@ export default function App(){
 
     {/* ── CALENDRIER ── */}
     {page==="calendar"&&<div style={pg}>
-      {/* Top controls */}
-      <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:10,flexWrap:"wrap"}}>
-        <div style={{display:"flex",alignItems:"center",gap:5}}>
-          <button onClick={()=>setSelDate(ad(selDate,-1))} style={{...btnS,padding:"6px 10px"}}>‹</button>
-          <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"6px 9px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"}}/>
-          <button onClick={()=>setSelDate(ad(selDate,1))} style={{...btnS,padding:"6px 10px"}}>›</button>
+      {/* Top controls — mobile: 2 lignes, desktop: 1 ligne */}
+      {mob?(
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:10}}>
+          {/* Ligne 1 : navigation date + aujourd'hui */}
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <button onClick={()=>setSelDate(ad(selDate,-1))}
+              style={{background:S2,border:"none",color:"#E2E8F0",width:38,height:38,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
+            <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}
+              style={{flex:1,background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer",minWidth:0}}/>
+            <button onClick={()=>setSelDate(ad(selDate,1))}
+              style={{background:S2,border:"none",color:"#E2E8F0",width:38,height:38,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
+          </div>
+          {/* Ligne 2 : aujourd'hui + nouvelle réservation */}
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={()=>setSelDate(today)}
+              style={{background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"9px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,flexShrink:0}}>
+              Aujourd'hui
+            </button>
+            <button onClick={openNewR}
+              style={{flex:1,background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"9px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700}}>
+              ＋ Nouvelle réservation
+            </button>
+          </div>
         </div>
-        <button onClick={()=>setSelDate(today)} style={{...btnS,background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"",color:selDate===today?"#fff":"#94A3B8"}}>Auj.</button>
-        <button onClick={openNewR} style={{background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"7px 13px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>＋ Réservation</button>
-        {!mob&&<div style={{marginLeft:"auto",display:"flex",gap:3,background:S2,borderRadius:9,padding:3}}>
-          {["day","week"].map(m=><button key={m} onClick={()=>setVm(m)} style={{background:vm===m?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm===m?"#fff":"#64748B",padding:"5px 12px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600}}>{m==="day"?"Jour":"Semaine"}</button>)}
-        </div>}
-      </div>
+      ):(
+        <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:5}}>
+            <button onClick={()=>setSelDate(ad(selDate,-1))} style={{...btnS,padding:"6px 10px"}}>‹</button>
+            <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"6px 9px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"}}/>
+            <button onClick={()=>setSelDate(ad(selDate,1))} style={{...btnS,padding:"6px 10px"}}>›</button>
+          </div>
+          <button onClick={()=>setSelDate(today)} style={{...btnS,background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"",color:selDate===today?"#fff":"#94A3B8"}}>Aujourd'hui</button>
+          <button onClick={openNewR} style={{background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"7px 13px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>＋ Nouvelle réservation</button>
+          <div style={{marginLeft:"auto",display:"flex",gap:3,background:S2,borderRadius:9,padding:3}}>
+            {["day","week"].map(m=><button key={m} onClick={()=>setVm(m)} style={{background:vm===m?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm===m?"#fff":"#64748B",padding:"5px 12px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600}}>{m==="day"?"Jour":"Semaine"}</button>)}
+          </div>
+        </div>
+      )}
 
       {/* Period filter */}
       <div style={{background:S1,border:"1.5px solid "+(spf?"#3B82F6":S2),borderRadius:10,padding:"9px 12px",marginBottom:10}}>
