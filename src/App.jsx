@@ -204,7 +204,7 @@ export default function App(){
   // Styles
   const BG="#0F1117",S1="#161B27",S2="#1E2535",S3="#2D3748";
   const HEADER_H=mob?54:64;
-  const pg=mob?{padding:"12px 14px",paddingTop:16,paddingBottom:88}:{maxWidth:1240,margin:"0 auto",padding:"20px 32px"};
+  const pg=mob?{padding:"12px 14px",paddingTop:66,paddingBottom:88}:{maxWidth:1240,margin:"0 auto",padding:"20px 32px"};
   const card={background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?13:18};
   const btnP={background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:mob?"7px 12px":"9px 18px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:mob?12:13};
   const btnS={background:S2,border:"none",color:"#94A3B8",padding:"7px 14px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600};
@@ -213,15 +213,15 @@ export default function App(){
 
   const TABS=[{id:"calendar",icon:"📅",label:"Calendrier"},{id:"fleet",icon:"🚗",label:"Flotte"},{id:"treasury",icon:"💰",label:"Trésorerie"},{id:"contracts",icon:"📄",label:"Contrats"}];
 
-  return<div style={{minHeight:"100vh",minHeight:"100dvh",width:"100%",background:BG,color:"#E2E8F0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden"}}>
+  return<div style={{minHeight:"100vh",width:"100%",background:BG,color:"#E2E8F0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden"}}>
     <style>{"@keyframes spin{to{transform:rotate(360deg)}}input[type='date']::-webkit-calendar-picker-indicator{filter:invert(.5);cursor:pointer;}*{box-sizing:border-box;}"}</style>
 
     {toast&&<div style={{position:"fixed",top:mob?8:16,right:mob?8:16,zIndex:3000,background:toast.type==="success"?"#10B981":toast.type==="error"?"#EF4444":"#64748B",color:"#fff",padding:"9px 14px",borderRadius:9,fontWeight:600,fontSize:13,boxShadow:"0 4px 20px rgba(0,0,0,.5)"}}>{toast.msg}</div>}
     {syncing&&<div style={{position:"fixed",top:mob?8:16,left:"50%",transform:"translateX(-50%)",zIndex:3000,background:S1,border:"1px solid "+S3,color:"#94A3B8",padding:"5px 14px",borderRadius:20,fontSize:11,display:"flex",alignItems:"center",gap:6}}><div style={{width:11,height:11,border:"2px solid "+S2,borderTopColor:"#3B82F6",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>Sync…</div>}
 
-    {/* HEADER */}
-    <header style={{background:S1,borderBottom:"1px solid "+S2,padding:mob?"0 12px":"0 32px",position:"sticky",top:0,zIndex:200}}>
-      <div style={{maxWidth:1240,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:mob?54:64,gap:8}}>
+    {/* HEADER — fixe en haut */}
+    <header style={{background:S1,borderBottom:"1px solid "+S2,padding:mob?"0 12px":"0 32px",position:"fixed",top:0,left:0,right:0,zIndex:200,height:mob?54:64}}>
+      <div style={{maxWidth:1240,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:"100%",gap:8}}>
         <div style={{display:"flex",alignItems:"center",gap:mob?8:10,flexShrink:0}}>
           <img src={LOGO} alt="" style={{width:mob?34:42,height:mob?34:42,objectFit:"contain",filter:"brightness(10)"}}/>
           {!mob&&<div><div style={{fontWeight:800,fontSize:15,color:"#F1F5F9",letterSpacing:"-.02em"}}>Chane-To Location</div><div style={{fontSize:10,color:"#64748B"}}>Gestion de flotte · 0693 01 00 94</div></div>}
@@ -235,6 +235,9 @@ export default function App(){
         </div>
       </div>
     </header>
+
+    {/* SPACER — pousse le contenu sous le header fixe */}
+    <div style={{height:mob?54:64}}/>
 
     {/* MOBILE BOTTOM NAV */}
     {mob&&<nav style={{position:"fixed",bottom:0,left:0,right:0,background:S1,borderTop:"1px solid "+S2,display:"flex",zIndex:200,paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
