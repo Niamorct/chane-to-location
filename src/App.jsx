@@ -18,7 +18,7 @@ const MFR=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","S
 const CO={name:"Chane-To Location",address:"",phone:"0693 01 00 94",email:"",siret:"",rcs:""};
 
 const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",mileage:r.mileage||"",fuel:r.fuel||"Essence"});
-const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||""});
+const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence"});
 const me=r=>({id:r.id,vehicleId:r.vehicle_id,date:r.date,amount:r.amount,category:r.category,note:r.note||""});
 
 const pd=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
@@ -42,10 +42,134 @@ function n2w(n){
 }
 
 function cHTML(b,v,co){
-  const days=gdb(b.start,b.end),total=b.rate*days,tw=n2w(total);
+  const days=gdb(b.start,b.end),total=b.rate*days;
+  const extraFees=Number(b.extraFees)||0;
+  const grandTotal=total+extraFees;
+  const tw=n2w(grandTotal);
   const cn="CTR-"+new Date().getFullYear()+"-"+String(b.id).padStart(4,"0");
   const ts=new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"});
-  return"<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Contrat "+cn+"</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10pt}.p{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto}.hd{display:flex;justify-content:space-between;border-bottom:3px solid #0F1117;padding-bottom:10px;margin-bottom:12px}.cn{font-size:17pt;font-weight:900;color:#0F1117}.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.s{border:1px solid #d1d5db;border-radius:5px;overflow:hidden;margin-bottom:10px}.sh{background:#0F1117;color:white;padding:5px 10px;font-size:8pt;font-weight:700}.sb{padding:9px 10px}.fr{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:3px 0}.fr:last-child{border:none}.fl{font-size:8pt;color:#6b7280;font-weight:600;min-width:120px}.fv{font-size:9pt;color:#111827;font-weight:600;text-align:right}.am{background:linear-gradient(135deg,#0F1117,#3b82f6);color:white;border-radius:7px;padding:12px 16px;margin-bottom:10px}.ag{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center}.al{font-size:7pt;opacity:.75;margin-bottom:2px}.av{font-size:13pt;font-weight:900}.at{text-align:center;margin-top:7px;border-top:1px solid rgba(255,255,255,.3);padding-top:7px}.sg{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:10px}.si{border:1px solid #d1d5db;border-radius:5px;padding:9px 10px}.st{font-size:8pt;font-weight:700;margin-bottom:5px}.sl{border-bottom:1.5px solid #374151;height:42px;margin-bottom:5px}.sm{font-size:7pt;color:#6b7280}.cv{border:1px solid #e5e7eb;border-radius:5px;padding:10px}.ct{font-size:9pt;font-weight:900;color:#0F1117;margin-bottom:7px;text-align:center;border-bottom:2px solid #0F1117;padding-bottom:5px}.at2{margin-bottom:5px}.at2-t{font-size:8pt;font-weight:700;color:#0F1117;margin-bottom:1px}.at2-b{font-size:7pt;color:#374151;line-height:1.4}.ft{font-size:7pt;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb;padding-top:7px;margin-top:10px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class='p'><div class='hd'><div><div class='cn'>"+co.name+"</div><div style='font-size:8pt;color:#64748b'>Location de véhicules</div><div style='margin-top:5px;font-size:7.5pt;color:#374151;line-height:1.5'>"+co.address+"<br>Tél : "+co.phone+(co.email?" - "+co.email:"")+"<br>"+(co.siret?"SIRET : "+co.siret:"")+"</div></div><div><div style='background:#0F1117;color:white;padding:4px 12px;border-radius:4px;font-size:7pt;font-weight:700;letter-spacing:1px;text-align:center;margin-bottom:4px'>CONTRAT DE LOCATION</div><div style='font-size:9pt;font-weight:700;text-align:center'>"+cn+"</div><div style='font-size:7.5pt;color:#6b7280;text-align:center;margin-top:3px'>Établi le "+ts+"</div></div></div><div class='g2'><div class='s'><div class='sh'>LE LOUEUR</div><div class='sb'><div class='fr'><span class='fl'>Société</span><span class='fv'>"+co.name+"</span></div><div class='fr'><span class='fl'>Téléphone</span><span class='fv'>"+co.phone+"</span></div><div class='fr'><span class='fl'>Email</span><span class='fv'>"+(co.email||"—")+"</span></div><div class='fr'><span class='fl'>SIRET</span><span class='fv'>"+(co.siret||"—")+"</span></div></div></div><div class='s'><div class='sh'>LE LOCATAIRE</div><div class='sb'><div class='fr'><span class='fl'>Nom complet</span><span class='fv'>"+b.client+"</span></div><div class='fr'><span class='fl'>Adresse</span><span class='fv'>"+(b.address||"—")+"</span></div><div class='fr'><span class='fl'>Téléphone</span><span class='fv'>"+(b.phone||"—")+"</span></div><div class='fr'><span class='fl'>Email</span><span class='fv'>"+(b.email||"—")+"</span></div><div class='fr'><span class='fl'>N° Permis</span><span class='fv'>"+(b.licenseNum||"—")+"</span></div></div></div></div><div class='s'><div class='sh'>VÉHICULE LOUÉ</div><div class='sb'><div class='g3'><div class='fr'><span class='fl'>Désignation</span><span class='fv'>"+v.name+"</span></div><div class='fr'><span class='fl'>Immatriculation</span><span class='fv'>"+v.plate+"</span></div><div class='fr'><span class='fl'>Type</span><span class='fv'>"+v.type+"</span></div><div class='fr'><span class='fl'>Année</span><span class='fv'>"+(v.year||"—")+"</span></div><div class='fr'><span class='fl'>Carburant</span><span class='fv'>"+(v.fuel||"—")+"</span></div><div class='fr'><span class='fl'>Km départ</span><span class='fv'>"+(v.mileage||"—")+" km</span></div></div></div></div><div class='s'><div class='sh'>PÉRIODE</div><div class='sb'><div class='g3'><div class='fr'><span class='fl'>Départ</span><span class='fv'>"+fdl(b.start)+"</span></div><div class='fr'><span class='fl'>Retour</span><span class='fv'>"+fdl(b.end)+"</span></div><div class='fr'><span class='fl'>Durée</span><span class='fv'>"+days+" jour"+(days>1?"s":"")+"</span></div></div></div></div><div class='am'><div style='font-size:8pt;opacity:.8;font-weight:600;margin-bottom:5px'>RECAPITULATIF FINANCIER</div><div class='ag'><div><div class='al'>TARIF/JOUR</div><div class='av'>"+b.rate+" €</div></div><div><div class='al'>DURÉE</div><div class='av'>"+days+"j</div></div><div><div class='al'>CAUTION</div><div class='av'>"+(b.deposit||0)+" €</div></div></div><div class='at'><div style='font-size:8pt;opacity:.8'>MONTANT TOTAL</div><div style='font-size:17pt;font-weight:900'>"+total.toLocaleString("fr-FR")+" €</div><div style='font-size:8pt;opacity:.85;font-style:italic;margin-top:2px'>Soit : "+tw+" euros</div></div></div>"+(b.notes?"<div style='background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#92400e;text-align:center;font-weight:600'>NOTE : "+b.notes+"</div>":"")+"<div class='sg'><div class='si'><div class='st'>SIGNATURE DU LOUEUR</div><div class='sl'></div><div class='sm'>Lu et approuvé - "+co.name+"</div></div><div class='si'><div class='st'>SIGNATURE DU LOCATAIRE</div><div class='sl'></div><div class='sm'>Lu et approuvé - "+b.client+"</div></div></div><div class='cv'><div class='ct'>CONDITIONS GÉNÉRALES DE LOCATION</div><div class='at2'><div class='at2-t'>Art. 1 - Objet</div><div class='at2-b'>Mise à disposition du véhicule décrit. La signature vaut acceptation sans réserve.</div></div><div class='at2'><div class='at2-t'>Art. 2 - Éligibilité</div><div class='at2-b'>Permis valable depuis 2 ans minimum, âge minimum 21 ans. Tout document falsifié entraîne résiliation et poursuites.</div></div><div class='at2'><div class='at2-t'>Art. 3 - Restitution</div><div class='at2-b'>État des lieux à la prise et restitution. Véhicule rendu propre avec même niveau carburant. Retard non signalé 24h avant = tarif majoré 20%.</div></div><div class='at2'><div class='at2-t'>Art. 4 - Caution</div><div class='at2-b'>Caution restituée à la remise déduction faite des frais. Règlement intégral à la signature.</div></div><div class='at2'><div class='at2-t'>Art. 5 - Responsabilité</div><div class='at2-b'>Le locataire est responsable de tout dommage. Franchise à sa charge. Utilisation à l'étranger nécessite autorisation écrite.</div></div><div class='at2'><div class='at2-t'>Art. 6 - Interdictions</div><div class='at2-b'>Interdit : sous-louer, utiliser en compétition, matières dangereuses, dépasser charge utile, fumer à bord.</div></div><div class='at2'><div class='at2-t'>Art. 7 - Panne/Accidents</div><div class='at2-b'>Contacter immédiatement le loueur. Constat amiable obligatoire sous 24h. Réparations soumises à accord préalable.</div></div><div class='at2'><div class='at2-t'>Art. 8 - Litiges</div><div class='at2-b'>Règlement amiable privilégié. Tribunal du siège du loueur. Droit français applicable.</div></div></div><div class='ft'>"+co.name+" — "+co.phone+" | Contrat "+cn+" — "+ts+"</div></div></body></html>";
+  const pickupLabel=(b.pickupLocation==="aeroport")?"✈️ Aéroport":"🏢 Agence";
+  const dropLabel=(b.dropLocation==="aeroport")?"✈️ Aéroport":"🏢 Agence";
+  const css=`*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10pt;color:#1a1a1a;}
+.page{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto;page-break-after:always;}
+.cgv-page{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto;}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0F1117;padding-bottom:10px;margin-bottom:12px;}
+.cn{font-size:17pt;font-weight:900;color:#0F1117;}.bg{background:#0F1117;color:white;padding:4px 12px;border-radius:4px;font-size:7pt;font-weight:700;letter-spacing:1px;text-align:center;margin-bottom:4px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.s{border:1px solid #d1d5db;border-radius:5px;overflow:hidden;margin-bottom:10px;}
+.sh{background:#0F1117;color:white;padding:5px 10px;font-size:8pt;font-weight:700;}
+.sb{padding:9px 10px;}
+.fr{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:3px 0;}
+.fr:last-child{border:none;}.fl{font-size:8pt;color:#6b7280;font-weight:600;min-width:120px;}.fv{font-size:9pt;color:#111827;font-weight:600;text-align:right;}
+.am{background:linear-gradient(135deg,#0F1117,#3b82f6);color:white;border-radius:7px;padding:12px 16px;margin-bottom:10px;}
+.ag{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;}
+.al{font-size:7pt;opacity:.75;margin-bottom:2px;}.av{font-size:12pt;font-weight:900;}
+.at{text-align:center;margin-top:7px;border-top:1px solid rgba(255,255,255,.3);padding-top:7px;}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:10px;}
+.si{border:1px solid #d1d5db;border-radius:5px;padding:9px 10px;}
+.st{font-size:8pt;font-weight:700;margin-bottom:5px;}.sl{border-bottom:1.5px solid #374151;height:42px;margin-bottom:5px;}.sm{font-size:7pt;color:#6b7280;}
+.cgv-title{font-size:14pt;font-weight:900;color:#0F1117;text-align:center;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #0F1117;}
+.cgv-art{margin-bottom:10px;}.cgv-at{font-size:9pt;font-weight:700;color:#0F1117;margin-bottom:4px;}
+.cgv-txt{font-size:7.5pt;color:#374151;line-height:1.6;text-align:justify;}
+.cgv-sub{font-size:8pt;font-weight:700;color:#374151;margin:6px 0 3px;}
+.ft{font-size:7pt;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb;padding-top:7px;margin-top:10px;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{page-break-after:always;}}`;
+
+  const contractPage = `<div class="page">
+<div class="hd"><div><div class="cn">${co.name}</div><div style="font-size:8pt;color:#64748b;">Location de véhicules — Île de la Réunion</div>
+<div style="margin-top:5px;font-size:7.5pt;color:#374151;line-height:1.5;">${co.address||"6 Chemin Bancalin Pierre Marc, Sainte Suzanne, Île de la Réunion"}<br>Tél : ${co.phone}${co.email?" · "+co.email:""}<br>${co.siret?"SIRET : "+co.siret+" · ":""}RCS 895 124 964</div></div>
+<div><div class="bg">CONTRAT DE LOCATION</div><div style="font-size:9pt;font-weight:700;text-align:center;">${cn}</div><div style="font-size:7.5pt;color:#6b7280;text-align:center;margin-top:3px;">Établi le ${ts}</div></div></div>
+<div class="g2">
+<div class="s"><div class="sh">🏢 LE LOUEUR</div><div class="sb">
+<div class="fr"><span class="fl">Société</span><span class="fv">${co.name}</span></div>
+<div class="fr"><span class="fl">Adresse</span><span class="fv">${co.address||"6 Chemin Bancalin Pierre Marc"}</span></div>
+<div class="fr"><span class="fl">Téléphone</span><span class="fv">${co.phone}</span></div>
+<div class="fr"><span class="fl">Email</span><span class="fv">${co.email||"chanetolocation@gmail.com"}</span></div>
+<div class="fr"><span class="fl">RCS</span><span class="fv">Saint Denis 895 124 964</span></div>
+</div></div>
+<div class="s"><div class="sh">👤 LE LOCATAIRE</div><div class="sb">
+<div class="fr"><span class="fl">Nom complet</span><span class="fv">${b.client}</span></div>
+<div class="fr"><span class="fl">Adresse</span><span class="fv">${b.address||"—"}</span></div>
+<div class="fr"><span class="fl">Téléphone</span><span class="fv">${b.phone||"—"}</span></div>
+<div class="fr"><span class="fl">Email</span><span class="fv">${b.email||"—"}</span></div>
+<div class="fr"><span class="fl">N° Permis</span><span class="fv">${b.licenseNum||"—"}</span></div>
+</div></div></div>
+<div class="s"><div class="sh">🚗 VÉHICULE LOUÉ</div><div class="sb"><div class="g3">
+<div class="fr"><span class="fl">Désignation</span><span class="fv">${v.name}</span></div>
+<div class="fr"><span class="fl">Immatriculation</span><span class="fv">${v.plate}</span></div>
+<div class="fr"><span class="fl">Type</span><span class="fv">${v.type}</span></div>
+<div class="fr"><span class="fl">Année</span><span class="fv">${v.year||"—"}</span></div>
+<div class="fr"><span class="fl">Carburant</span><span class="fv">${v.fuel||"—"}</span></div>
+<div class="fr"><span class="fl">Km départ</span><span class="fv">${v.mileage||"—"} km</span></div>
+</div></div></div>
+<div class="s"><div class="sh">📅 PÉRIODE & LIEUX</div><div class="sb"><div class="g3">
+<div class="fr"><span class="fl">Départ</span><span class="fv">${fdl(b.start)}</span></div>
+<div class="fr"><span class="fl">Retour</span><span class="fv">${fdl(b.end)}</span></div>
+<div class="fr"><span class="fl">Durée</span><span class="fv">${days} jour${days>1?"s":""}</span></div>
+<div class="fr"><span class="fl">Récupération</span><span class="fv">${pickupLabel}</span></div>
+<div class="fr"><span class="fl">Dépose</span><span class="fv">${dropLabel}</span></div>
+</div></div></div>
+<div class="am">
+<div style="font-size:8pt;opacity:.8;font-weight:600;margin-bottom:5px;">💰 RÉCAPITULATIF FINANCIER</div>
+<div class="ag">
+<div><div class="al">TARIF/JOUR</div><div class="av">${b.rate} €</div></div>
+<div><div class="al">DURÉE</div><div class="av">${days}j</div></div>
+<div><div class="al">CAUTION</div><div class="av">${b.deposit||0} €</div></div>
+<div><div class="al">FRAIS SUPPL.</div><div class="av">${extraFees} €</div></div>
+</div>
+<div class="at">
+<div style="font-size:8pt;opacity:.8;">MONTANT TOTAL (location + frais)</div>
+<div style="font-size:17pt;font-weight:900;">${grandTotal.toLocaleString("fr-FR")} €</div>
+<div style="font-size:8pt;opacity:.85;font-style:italic;margin-top:2px;">Soit : ${tw} euros</div>
+</div></div>
+${extraFees>0?`<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#92400e;"><strong>Détail frais additionnels :</strong> ${b.extraFeesNote||"Voir conditions"} — ${extraFees} €</div>`:""}
+${b.notes?`<div style="background:#f0f9ff;border:1px solid #0ea5e9;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#0369a1;text-align:center;font-weight:600;">📋 ${b.notes}</div>`:""}
+<div class="sg">
+<div class="si"><div class="st">SIGNATURE DU LOUEUR</div><div class="sl"></div><div class="sm">Lu et approuvé — ${co.name}</div><div class="sm">Cachet et signature</div></div>
+<div class="si"><div class="st">SIGNATURE DU LOCATAIRE</div><div class="sl"></div><div class="sm">Lu et approuvé — ${b.client}</div><div class="sm">Précéder de la mention manuscrite « Lu et approuvé »</div></div>
+</div>
+<div class="ft">${co.name} — ${co.phone} — chanetolocation@gmail.com | Contrat ${cn} — ${ts} | Les Conditions Générales figurent en page suivante</div>
+</div>`;
+
+  const cgvPage = `<div class="cgv-page">
+<div class="cgv-title">CONDITIONS GÉNÉRALES DE LOCATION — CHANE-TO LOCATION</div>
+<div style="font-size:7.5pt;color:#374151;margin-bottom:10px;text-align:center;font-style:italic;">CHANE TO LOCATION — RCS Saint Denis 895 124 964 — 6 Chemin Bancalin Pierre Marc, Sainte Suzanne, Île de la Réunion — 0693 01 00 94 — chanetolocation@gmail.com</div>
+
+<div class="cgv-art"><div class="cgv-at">A. MENTIONS LÉGALES</div><div class="cgv-txt">CHANE TO LOCATION est une entreprise individuelle immatriculée au RCS de Saint Denis sous le numéro 895 124 964, dont le siège est situé 6 Chemin Bancalin Pierre Marc, Sainte Suzanne, Île de la Réunion. Directeur de la publication : Monsieur Romain Chane-To. Tél : 06 93 01 00 94 — chanetolocation@gmail.com. La Société se réserve le droit de modifier les présentes Conditions Générales à tout moment.</div></div>
+
+<div class="cgv-art"><div class="cgv-at">ARTICLE 1 — DÉFINITIONS</div><div class="cgv-txt">« Véhicule(s) » désigne des véhicules terrestres automobiles motorisés à quatre (4) roues proposés à la location. « Demande de Réservation » désigne une demande formulée par un Membre quant à la location d'un Véhicule. « Parties » désigne CHANE TO LOCATION et les Membres.</div></div>
+
+<div class="cgv-art"><div class="cgv-at">ARTICLE 3 — ÉTAT DES LIEUX</div>
+<div class="cgv-sub">3.1 État des lieux d'entrée (début de location)</div>
+<div class="cgv-txt">Préalablement à la mise à disposition du Véhicule, un état des lieux d'entrée sera établi contradictoirement et signé par les deux parties. Il indiquera le niveau de carburant, le kilométrage et l'état général du véhicule. CHANE TO LOCATION s'engage à : vérifier la validité du permis du locataire (original, plus de 2 ans, 22 ans minimum) ; remplir et faire signer l'état des lieux ; fournir une copie de la carte grise. Le Locataire s'engage à : envoyer une copie de son permis au minimum 24h avant le début de la location ; remplir et signer l'état des lieux. Des photos du véhicule sont fortement recommandées.</div>
+<div class="cgv-sub">3.2 État des lieux de sortie (fin de location)</div>
+<div class="cgv-txt">À terme de la location, un état des lieux de sortie sera réalisé. Le Locataire restitue le Véhicule dans le même état qu'à la prise en charge. CHANE TO LOCATION peut signaler des dommages dans un délai de 4 mois suivant la date de fin de location.</div></div>
+
+<div class="cgv-art"><div class="cgv-at">ARTICLE 4 — ENGAGEMENTS DU LOCATAIRE</div>
+<div class="cgv-sub">4.1 Engagements généraux</div>
+<div class="cgv-txt">Le Locataire doit être âgé d'au moins 22 ans, titulaire d'un permis de catégorie B valable depuis 2 ans au minimum, sans suspension au cours des 24 derniers mois. Le Locataire s'interdit de sous-louer le Véhicule ou de le mettre à disposition d'un tiers sans accord écrit préalable.</div>
+<div class="cgv-sub">4.2 Interdictions d'utilisation</div>
+<div class="cgv-txt">Le Véhicule ne doit pas être utilisé : pour le transport commercial de personnes ou de biens ; pour des courses ou rallyes ; sous l'influence de l'alcool ou de stupéfiants ; dans un but illégal ; hors de l'Île de la Réunion. Le Locataire ne doit pas réviser, réparer ou remplacer une pièce sans accord écrit préalable.</div>
+<div class="cgv-sub">4.3 Frais annexes applicables</div>
+<div class="cgv-txt">• Kilométrage : 0,30 €/km (ou option illimitée : 5 €/jour) • Carburant manquant : 30 €/quart de plein • Véhicule anormalement sale : 60 € • Non-respect non-fumeur : 40 € • Frais de contravention : 20 € • Retard de restitution : 5 €/demi-heure • Restitution lieu différent : majoration 100 €</div></div>
+
+<div class="cgv-art"><div class="cgv-at">ARTICLE 5 — BARÈME DES DOMMAGES (extrait)</div>
+<div class="cgv-txt">Un barème forfaitaire s'applique selon la catégorie du véhicule : Aile enfoncée (390–507 €) · Pare-choc éraflé (360–468 €) · Porte enfoncée (390–507 €) · Capot/coffre enfoncé (490–637 €) · Toit enfoncé (690–897 €) · Franchise bris de glace : 80 € · Jante endommagée (250–520 €) · Brûlure de cigarette (250–325 €) · Volant endommagé (500–650 €). Clés/Néman : sur devis.</div></div>
+
+<div class="cgv-art"><div class="cgv-at">ARTICLE 6 — RÉSERVATION ET RÈGLEMENT</div>
+<div class="cgv-txt">Un acompte de 10% est exigé à la réservation. Le solde est dû avant la prise du véhicule. Toute demande de réservation est soumise à acceptation. Le devis est valable 48 heures. Options possibles : dépôt à l'aéroport, siège auto/réhausseur.</div></div>
+
+<div class="cgv-art"><div class="cgv-at">ARTICLE 7 — DÉPÔT DE GARANTIE ET ASSURANCE</div>
+<div class="cgv-txt">Le dépôt de garantie est fixé à 1 000 € par principe, géré par SMILE & PAY. Franchises applicables : contractuelle 1 000 € · jeune conducteur (cumulable) 1 000 € · bris de glace 80 € · alcoolémie/stupéfiants 5 000 € · catastrophes naturelles 380 €. Les dommages intérieurs, mécaniques et cas de négligence ne sont pas couverts par l'assurance.</div></div>
+
+<div class="cgv-art"><div class="cgv-at">ARTICLE 8 — ANNULATION</div>
+<div class="cgv-txt">• Annulation avant le début de la location : remboursement à hauteur de 90% du prix. Les 10% restants sont conservés au titre des frais d'annulation. • Annulation pendant la période de location : aucun remboursement. Contact : chanetolocation@gmail.com</div></div>
+
+<div class="ft">${co.name} — RCS Saint Denis 895 124 964 — 0693 01 00 94 | Contrat ${cn} — Page CGV</div>
+</div>`;
+
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Contrat ${cn}</title><style>${css}</style></head><body>${contractPage}${cgvPage}</body></html>`;
 }
 
 function BC({data,h=110}){
@@ -71,6 +195,353 @@ function useIsMobile(){
   },[]);
   return m;
 }
+
+// ── ÉTAT DES LIEUX COMPONENT ────────────────────────────────────────────────
+function GaugeSelector({label,value,onChange,color="#3B82F6"}){
+  const levels=[
+    {v:0,l:"0",icon:"▪"},
+    {v:1,l:"1/4",icon:"▪"},
+    {v:2,l:"1/2",icon:"▪"},
+    {v:3,l:"3/4",icon:"▪"},
+    {v:4,l:"Plein",icon:"▪"},
+  ];
+  return(
+    <div style={{marginBottom:8}}>
+      <div style={{fontSize:11,color:"#94A3B8",fontWeight:600,marginBottom:6}}>{label}</div>
+      <div style={{display:"flex",gap:4,alignItems:"center"}}>
+        {levels.map(l=>(
+          <button key={l.v} onClick={()=>onChange(l.v)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:"none",background:value>=l.v?color+"90":"#1E2535",color:value>=l.v?"#fff":"#475569",cursor:"pointer",fontSize:10,fontWeight:700,transition:"all .15s"}}>
+            {l.l}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CarSchema({damages,onToggle,title}){
+  // Zones cliquables sur le schéma voiture (coordonnées en %)
+  const zones=[
+    {id:"front",label:"Avant",x:50,y:10,w:30,h:12},
+    {id:"front-left",label:"Aile Av G",x:22,y:18,w:20,h:10},
+    {id:"front-right",label:"Aile Av D",x:58,y:18,w:20,h:10},
+    {id:"hood",label:"Capot",x:50,y:22,w:28,h:10},
+    {id:"windshield",label:"Pare-brise",x:50,y:31,w:26,h:8},
+    {id:"roof",label:"Toit",x:50,y:42,w:26,h:10},
+    {id:"door-left-front",label:"Porte Av G",x:20,y:42,w:18,h:12},
+    {id:"door-right-front",label:"Porte Av D",x:80,y:42,w:18,h:12},
+    {id:"door-left-rear",label:"Porte Ar G",x:20,y:56,w:18,h:12},
+    {id:"door-right-rear",label:"Porte Ar D",x:80,y:56,w:18,h:12},
+    {id:"rear-windshield",label:"Lunette Ar",x:50,y:63,w:26,h:8},
+    {id:"rear-left",label:"Aile Ar G",x:22,y:68,w:20,h:10},
+    {id:"rear-right",label:"Aile Ar D",x:58,y:68,w:20,h:10},
+    {id:"rear",label:"Arrière",x:50,y:80,w:30,h:12},
+    {id:"underbody",label:"Dessous",x:50,y:93,w:22,h:8},
+  ];
+  return(
+    <div>
+      <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>{title}</div>
+      <div style={{position:"relative",width:"100%",paddingBottom:"120%",background:"#0F1117",borderRadius:12,border:"1px solid #1E2535",overflow:"hidden"}}>
+        {/* Silhouette SVG voiture */}
+        <svg viewBox="0 0 200 280" style={{position:"absolute",inset:0,width:"100%",height:"100%"}} xmlns="http://www.w3.org/2000/svg">
+          {/* Corps principal */}
+          <rect x="60" y="60" width="80" height="160" rx="8" fill="#1E2535" stroke="#2D3748" strokeWidth="1.5"/>
+          {/* Toit */}
+          <rect x="70" y="100" width="60" height="60" rx="6" fill="#161B27" stroke="#2D3748" strokeWidth="1"/>
+          {/* Avant */}
+          <rect x="65" y="35" width="70" height="30" rx="6" fill="#1E2535" stroke="#2D3748" strokeWidth="1.5"/>
+          {/* Arrière */}
+          <rect x="65" y="215" width="70" height="30" rx="6" fill="#1E2535" stroke="#2D3748" strokeWidth="1.5"/>
+          {/* Roues */}
+          <circle cx="60" cy="90" r="14" fill="#0F1117" stroke="#3B82F6" strokeWidth="2"/>
+          <circle cx="140" cy="90" r="14" fill="#0F1117" stroke="#3B82F6" strokeWidth="2"/>
+          <circle cx="60" cy="190" r="14" fill="#0F1117" stroke="#3B82F6" strokeWidth="2"/>
+          <circle cx="140" cy="190" r="14" fill="#0F1117" stroke="#3B82F6" strokeWidth="2"/>
+          {/* Vitres */}
+          <rect x="73" y="103" width="24" height="25" rx="3" fill="#2D3748" opacity="0.7"/>
+          <rect x="103" y="103" width="24" height="25" rx="3" fill="#2D3748" opacity="0.7"/>
+          <rect x="73" y="133" width="24" height="22" rx="3" fill="#2D3748" opacity="0.7"/>
+          <rect x="103" y="133" width="24" height="22" rx="3" fill="#2D3748" opacity="0.7"/>
+          {/* Labels */}
+          <text x="100" y="52" textAnchor="middle" fontSize="7" fill="#64748B">AVANT</text>
+          <text x="100" y="235" textAnchor="middle" fontSize="7" fill="#64748B">ARRIÈRE</text>
+          <text x="40" y="142" textAnchor="middle" fontSize="6" fill="#64748B" transform="rotate(-90,40,142)">GAUCHE</text>
+          <text x="160" y="142" textAnchor="middle" fontSize="6" fill="#64748B" transform="rotate(90,160,142)">DROITE</text>
+          {/* Zones de dommages */}
+          {zones.map(z=>{
+            const isDmg=damages.includes(z.id);
+            const px=z.x/100*200-z.w/100*200/2;
+            const py=z.y/100*280-z.h/100*280/2;
+            const pw=z.w/100*200;
+            const ph=z.h/100*280;
+            return(
+              <g key={z.id} onClick={()=>onToggle(z.id)} style={{cursor:"pointer"}}>
+                <rect x={px} y={py} width={pw} height={ph} rx="3" fill={isDmg?"#EF4444":"transparent"} fillOpacity={isDmg?0.4:0} stroke={isDmg?"#EF4444":"transparent"} strokeWidth="1.5"/>
+                {isDmg&&<text x={px+pw/2} y={py+ph/2+3} textAnchor="middle" fontSize="7" fill="#EF4444" fontWeight="bold">✕</text>}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      {/* Légende des zones endommagées */}
+      {damages.length>0&&(
+        <div style={{marginTop:8,display:"flex",flexWrap:"wrap",gap:4}}>
+          {damages.map(d=>{
+            const zone=zones.find(z=>z.id===d);
+            return zone?(<span key={d} style={{background:"#EF444420",border:"1px solid #EF444440",borderRadius:20,padding:"2px 8px",fontSize:10,color:"#EF4444",fontWeight:600}}>{zone.label}</span>):null;
+          })}
+        </div>
+      )}
+      <div style={{marginTop:6,fontSize:10,color:"#475569",fontStyle:"italic"}}>Appuyez sur une zone du véhicule pour noter un dommage</div>
+    </div>
+  );
+}
+
+function PhotoUpload({photos,onAdd,onRemove,label}){
+  const handleFile=e=>{
+    const files=Array.from(e.target.files);
+    files.forEach(file=>{
+      const reader=new FileReader();
+      reader.onload=ev=>onAdd({url:ev.target.result,name:file.name,date:new Date().toLocaleTimeString("fr-FR")});
+      reader.readAsDataURL(file);
+    });
+    e.target.value="";
+  };
+  return(
+    <div>
+      <div style={{fontSize:11,color:"#94A3B8",fontWeight:600,marginBottom:8}}>{label}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:8,marginBottom:8}}>
+        {photos.map((p,i)=>(
+          <div key={i} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"1",background:"#0F1117"}}>
+            <img src={p.url} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            <button onClick={()=>onRemove(i)} style={{position:"absolute",top:2,right:2,background:"#EF4444",border:"none",color:"#fff",width:18,height:18,borderRadius:"50%",cursor:"pointer",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+        ))}
+        <label style={{borderRadius:8,border:"1.5px dashed #2D3748",aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",background:"#0F1117",gap:4}}>
+          <span style={{fontSize:20,color:"#475569"}}>📷</span>
+          <span style={{fontSize:9,color:"#475569"}}>Ajouter</span>
+          <input type="file" accept="image/*" multiple onChange={handleFile} style={{display:"none"}}/>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function EdlSection({title,icon,data,onChange,mob,BG,S1,S2}){
+  const toggleDamage=zone=>{
+    const cur=data.damages||[];
+    onChange({...data,damages:cur.includes(zone)?cur.filter(z=>z!==zone):[...cur,zone]});
+  };
+  return(
+    <div style={{background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?14:20,display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{fontSize:14,fontWeight:700,color:"#F1F5F9",display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontSize:18}}>{icon}</span>{title}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:16}}>
+        <div>
+          <GaugeSelector label="⛽ Niveau de carburant" value={data.fuel??2} onChange={v=>onChange({...data,fuel:v})} color="#F59E0B"/>
+          <GaugeSelector label="✨ Propreté intérieure" value={data.cleanIn??4} onChange={v=>onChange({...data,cleanIn:v})} color="#10B981"/>
+          <GaugeSelector label="🚗 Propreté extérieure" value={data.cleanOut??4} onChange={v=>onChange({...data,cleanOut:v})} color="#3B82F6"/>
+          <div style={{marginTop:12}}>
+            <div style={{fontSize:11,color:"#94A3B8",fontWeight:600,marginBottom:6}}>📊 Kilométrage</div>
+            <input type="number" value={data.mileage||""} onChange={e=>onChange({...data,mileage:e.target.value})} placeholder="Ex: 48500" style={{width:"100%",background:"#0F1117",border:"1px solid #2D3748",color:"#E2E8F0",padding:"9px 12px",borderRadius:8,fontSize:14,fontWeight:600,outline:"none"}}/>
+          </div>
+          <div style={{marginTop:10}}>
+            <div style={{fontSize:11,color:"#94A3B8",fontWeight:600,marginBottom:6}}>📝 Observations</div>
+            <textarea value={data.notes||""} onChange={e=>onChange({...data,notes:e.target.value})} placeholder="Notes, remarques particulières..." rows={3} style={{width:"100%",background:"#0F1117",border:"1px solid #2D3748",color:"#E2E8F0",padding:"9px 12px",borderRadius:8,fontSize:12,outline:"none",resize:"vertical",fontFamily:"inherit"}}/>
+          </div>
+        </div>
+        <div>
+          <CarSchema damages={data.damages||[]} onToggle={toggleDamage} title="🗺 Schéma dommages (cliquez les zones)"/>
+        </div>
+      </div>
+      <PhotoUpload photos={data.photos||[]} label="📷 Photos" onAdd={p=>onChange({...data,photos:[...(data.photos||[]),p]})} onRemove={i=>onChange({...data,photos:(data.photos||[]).filter((_,idx)=>idx!==i)})}/>
+    </div>
+  );
+}
+
+function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
+  const[selBookingId,setSelBookingId]=useState(null);
+  const[edlIn,setEdlIn]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});
+  const[edlOut,setEdlOut]=useState({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});
+
+  const selBooking=bookings.find(b=>b.id===selBookingId);
+  const selVehicle=selBooking?vehicles.find(v=>v.id===selBooking.vehicleId):null;
+
+  const fuelLabels=["Vide","1/4","1/2","3/4","Plein"];
+  const cleanLabels=["Très sale","Sale","Moyen","Propre","Très propre"];
+
+  function printEdl(){
+    const bk=selBooking,v=selVehicle;
+    if(!bk||!v)return;
+    const html=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>État des lieux — ${bk.client}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10pt;}
+.page{width:210mm;min-height:297mm;padding:13mm 15mm;margin:0 auto;page-break-after:always;}
+.hd{border-bottom:3px solid #0F1117;padding-bottom:10px;margin-bottom:12px;}
+.title{font-size:16pt;font-weight:900;color:#0F1117;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;}
+.s{border:1px solid #d1d5db;border-radius:6px;overflow:hidden;margin-bottom:10px;}
+.sh{background:#0F1117;color:white;padding:5px 10px;font-size:8pt;font-weight:700;}
+.sb{padding:10px;}
+.fr{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:3px 0;}
+.fr:last-child{border:none;}
+.fl{font-size:8pt;color:#6b7280;font-weight:600;}
+.fv{font-size:9pt;color:#111827;font-weight:600;}
+.gauge{display:flex;gap:3px;margin-top:4px;}
+.g-cell{flex:1;height:16px;border-radius:3px;border:1px solid #d1d5db;}
+.g-fill{background:#3B82F6;}
+.g-empty{background:#f3f4f6;}
+.sig{border:1px solid #d1d5db;border-radius:5px;padding:10px;margin-top:10px;}
+.sl{border-bottom:1px solid #374151;height:40px;margin-bottom:5px;}
+.ft{font-size:7pt;color:#9ca3af;text-align:center;margin-top:10px;}
+.dmg-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.dmg-tag{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:2px 8px;font-size:8pt;color:#dc2626;}
+.photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
+.photo{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #d1d5db;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{page-break-after:always;}}</style></head><body>
+<div class="page">
+<div class="hd"><div class="title">ÉTAT DES LIEUX — ENTRÉE</div>
+<div style="font-size:8pt;color:#64748b;margin-top:4px;">CHANE-TO LOCATION · 0693 01 00 94 · chanetolocation@gmail.com</div></div>
+<div class="g2">
+<div class="s"><div class="sh">🚗 VÉHICULE</div><div class="sb">
+<div class="fr"><span class="fl">Désignation</span><span class="fv">${v.name}</span></div>
+<div class="fr"><span class="fl">Immatriculation</span><span class="fv">${v.plate}</span></div>
+<div class="fr"><span class="fl">Kilométrage</span><span class="fv">${edlIn.mileage||"—"} km</span></div>
+</div></div>
+<div class="s"><div class="sh">👤 LOCATAIRE</div><div class="sb">
+<div class="fr"><span class="fl">Nom</span><span class="fv">${bk.client}</span></div>
+<div class="fr"><span class="fl">Tél</span><span class="fv">${bk.phone||"—"}</span></div>
+<div class="fr"><span class="fl">Période</span><span class="fv">${fd(bk.start)} → ${fd(bk.end)}</span></div>
+</div></div></div>
+<div class="s"><div class="sh">📊 NIVEAUX & PROPRETÉ</div><div class="sb">
+<div class="fr"><span class="fl">Carburant</span><span class="fv">${fuelLabels[edlIn.fuel??2]}</span></div>
+<div class="gauge">${Array(5).fill(0).map((_,i)=>`<div class="g-cell ${i<=(edlIn.fuel??2)?'g-fill':'g-empty'}"></div>`).join("")}</div>
+<div class="fr" style="margin-top:6px;"><span class="fl">Propreté intérieure</span><span class="fv">${cleanLabels[edlIn.cleanIn??4]}</span></div>
+<div class="fr"><span class="fl">Propreté extérieure</span><span class="fv">${cleanLabels[edlIn.cleanOut??4]}</span></div>
+</div></div>
+<div class="s"><div class="sh">🗺 DOMMAGES CONSTATÉS</div><div class="sb">
+${(edlIn.damages||[]).length===0?'<div style="color:#6b7280;font-size:9pt;">Aucun dommage constaté</div>':'<div class="dmg-list">'+edlIn.damages.map(d=>`<span class="dmg-tag">${d}</span>`).join("")+'</div>'}
+</div></div>
+${(edlIn.notes)?`<div class="s"><div class="sh">📝 OBSERVATIONS</div><div class="sb"><div style="font-size:9pt;">${edlIn.notes}</div></div></div>`:""}
+${(edlIn.photos||[]).length>0?`<div class="s"><div class="sh">📷 PHOTOS</div><div class="sb"><div class="photos">${edlIn.photos.map(p=>`<img class="photo" src="${p.url}" alt="photo"/>`).join("")}</div></div></div>`:""}
+<div class="g2">
+<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOUEUR</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">CHANE-TO LOCATION</div></div>
+<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOCATAIRE</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">${bk.client} — Lu et approuvé</div></div>
+</div>
+<div class="ft">CHANE-TO LOCATION · État des lieux d'entrée · ${bk.client} · ${fd(bk.start)}</div>
+</div>
+<div class="page">
+<div class="hd"><div class="title">ÉTAT DES LIEUX — SORTIE</div>
+<div style="font-size:8pt;color:#64748b;margin-top:4px;">CHANE-TO LOCATION · 0693 01 00 94 · chanetolocation@gmail.com</div></div>
+<div class="g2">
+<div class="s"><div class="sh">🚗 VÉHICULE</div><div class="sb">
+<div class="fr"><span class="fl">Désignation</span><span class="fv">${v.name}</span></div>
+<div class="fr"><span class="fl">Immatriculation</span><span class="fv">${v.plate}</span></div>
+<div class="fr"><span class="fl">Kilométrage retour</span><span class="fv">${edlOut.mileage||"—"} km</span></div>
+${edlIn.mileage&&edlOut.mileage?`<div class="fr"><span class="fl">Km parcourus</span><span class="fv">${Number(edlOut.mileage)-Number(edlIn.mileage)} km</span></div>`:""}
+</div></div>
+<div class="s"><div class="sh">👤 LOCATAIRE</div><div class="sb">
+<div class="fr"><span class="fl">Nom</span><span class="fv">${bk.client}</span></div>
+<div class="fr"><span class="fl">Tél</span><span class="fv">${bk.phone||"—"}</span></div>
+<div class="fr"><span class="fl">Fin de location</span><span class="fv">${fd(bk.end)}</span></div>
+</div></div></div>
+<div class="s"><div class="sh">📊 NIVEAUX & PROPRETÉ AU RETOUR</div><div class="sb">
+<div class="fr"><span class="fl">Carburant</span><span class="fv">${fuelLabels[edlOut.fuel??2]}</span></div>
+<div class="gauge">${Array(5).fill(0).map((_,i)=>`<div class="g-cell ${i<=(edlOut.fuel??2)?'g-fill':'g-empty'}"></div>`).join("")}</div>
+<div class="fr" style="margin-top:6px;"><span class="fl">Propreté intérieure</span><span class="fv">${cleanLabels[edlOut.cleanIn??4]}</span></div>
+<div class="fr"><span class="fl">Propreté extérieure</span><span class="fv">${cleanLabels[edlOut.cleanOut??4]}</span></div>
+</div></div>
+<div class="s"><div class="sh">🗺 DOMMAGES CONSTATÉS AU RETOUR</div><div class="sb">
+${(edlOut.damages||[]).length===0?'<div style="color:#6b7280;font-size:9pt;">Aucun dommage constaté</div>':'<div class="dmg-list">'+edlOut.damages.map(d=>`<span class="dmg-tag">${d}</span>`).join("")+'</div>'}
+</div></div>
+${edlOut.notes?`<div class="s"><div class="sh">📝 OBSERVATIONS</div><div class="sb"><div style="font-size:9pt;">${edlOut.notes}</div></div></div>`:""}
+${(edlOut.photos||[]).length>0?`<div class="s"><div class="sh">📷 PHOTOS</div><div class="sb"><div class="photos">${edlOut.photos.map(p=>`<img class="photo" src="${p.url}" alt="photo"/>`).join("")}</div></div></div>`:""}
+<div class="g2">
+<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOUEUR</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">CHANE-TO LOCATION</div></div>
+<div class="sig"><div style="font-size:8pt;font-weight:700;margin-bottom:5px;">SIGNATURE LOCATAIRE</div><div class="sl"></div><div style="font-size:7pt;color:#6b7280;">${bk.client} — Lu et approuvé</div></div>
+</div>
+<div class="ft">CHANE-TO LOCATION · État des lieux de sortie · ${bk.client} · ${fd(bk.end)}</div>
+</div></body></html>`;
+    const w=window.open("","_blank","width=950,height=1100");
+    if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
+  }
+
+  const fuelLabels=["Vide","1/4","1/2","3/4","Plein"];
+  const cleanLabels=["Très sale","Sale","Moyen","Propre","Très propre"];
+
+  return(
+    <div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontSize:mob?18:22,fontWeight:700,color:"#F1F5F9"}}>🔍 État des lieux</div>
+        <div style={{fontSize:12,color:"#475569",marginTop:2}}>Entrée et sortie du véhicule</div>
+      </div>
+
+      {/* Sélection réservation */}
+      <div style={{background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?14:18,marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:12}}>📋 Sélectionner une réservation</div>
+        {bookings.length===0?<div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0"}}>Aucune réservation</div>:
+        <div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:200,overflowY:"auto"}}>
+          {[...bookings].sort((a,b)=>new Date(b.start)-new Date(a.start)).map(b=>{
+            const v=vehicles.find(v=>v.id===b.vehicleId),isSel=selBookingId===b.id;
+            return(<div key={b.id} onClick={()=>{setSelBookingId(b.id);setEdlIn({fuel:2,cleanIn:4,cleanOut:4,mileage:v?.mileage||"",notes:"",damages:[],photos:[]});setEdlOut({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});}}
+              style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:9,padding:"9px 11px",cursor:"pointer"}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
+              <div style={{fontSize:10,color:"#64748B",marginTop:1,display:"flex",alignItems:"center",gap:6}}>
+                <span style={{width:6,height:6,borderRadius:"50%",background:v?.color||"#475569",display:"inline-block",flexShrink:0}}/>
+                {v?.name||"?"} · {v?.plate||"?"}
+              </div>
+              <div style={{fontSize:10,color:"#475569",marginTop:1}}>📅 {fd(b.start)} → {fd(b.end)}</div>
+              {isSel&&<div style={{fontSize:10,color:"#3B82F6",fontWeight:600,marginTop:4}}>✓ Sélectionné</div>}
+            </div>);
+          })}
+        </div>}
+      </div>
+
+      {selBooking&&selVehicle&&(<>
+        {/* Info véhicule */}
+        <div style={{background:"linear-gradient(135deg,"+selVehicle.color+"15,"+selVehicle.color+"05)",border:"1.5px solid "+selVehicle.color+"40",borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:44,height:44,borderRadius:10,background:selVehicle.color+"30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🚗</div>
+          <div>
+            <div style={{fontWeight:700,fontSize:14,color:"#F1F5F9"}}>{selVehicle.name} · {selVehicle.plate}</div>
+            <div style={{fontSize:11,color:"#475569"}}>{selBooking.client} · {fd(selBooking.start)} → {fd(selBooking.end)}</div>
+          </div>
+        </div>
+
+        {/* Les deux sections EDL */}
+        <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:16,marginBottom:16}}>
+          <EdlSection title="PRISE EN CHARGE (début)" icon="🟢" data={edlIn} onChange={setEdlIn} mob={mob} BG={BG} S1={S1} S2={S2}/>
+          <EdlSection title="RESTITUTION (fin)" icon="🔴" data={edlOut} onChange={setEdlOut} mob={mob} BG={BG} S1={S1} S2={S2}/>
+        </div>
+
+        {/* Récap comparatif */}
+        {(edlIn.mileage&&edlOut.mileage)&&(
+          <div style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:"14px 16px",marginBottom:16}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>📊 Comparatif entrée / sortie</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+              <div style={{background:BG,borderRadius:8,padding:"10px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:"#64748B",marginBottom:3}}>KM PARCOURUS</div>
+                <div style={{fontSize:18,fontWeight:800,color:"#F59E0B"}}>{Number(edlOut.mileage)-Number(edlIn.mileage)} km</div>
+              </div>
+              <div style={{background:BG,borderRadius:8,padding:"10px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:"#64748B",marginBottom:3}}>CARBURANT</div>
+                <div style={{fontSize:13,fontWeight:700,color:edlOut.fuel>=(edlIn.fuel??2)?"#10B981":"#EF4444"}}>{fuelLabels[edlIn.fuel??2]} → {fuelLabels[edlOut.fuel??2]}</div>
+              </div>
+              <div style={{background:BG,borderRadius:8,padding:"10px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:"#64748B",marginBottom:3}}>DOMMAGES</div>
+                <div style={{fontSize:18,fontWeight:800,color:(edlOut.damages||[]).length>0?"#EF4444":"#10B981"}}>{(edlOut.damages||[]).length} zone{(edlOut.damages||[]).length>1?"s":""}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <button onClick={printEdl} style={{width:"100%",background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"14px 20px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 4px 20px rgba(59,130,246,.4)"}}>
+          <span style={{fontSize:16}}>📥</span> Exporter l'état des lieux (PDF 2 pages)
+        </button>
+      </>)}
+    </div>
+  );
+}
+
 
 export default function App(){
   const today=new Date().toISOString().slice(0,10);
@@ -100,7 +571,7 @@ export default function App(){
   const[spf,setSpf]=useState(false);
   const[cbid,setCbid]=useState(null);
   const[cco,setCco]=useState({...CO});
-  const[cex,setCex]=useState({email:"",address:"",licenseNum:"",deposit:0});
+  const[cex,setCex]=useState({email:"",address:"",licenseNum:"",deposit:0,extraFees:0,extraFeesNote:""});
 
   const loadAll=useCallback(async()=>{
     setLoading(true);
@@ -120,14 +591,14 @@ export default function App(){
   const openDetail=(vid,date)=>{
     const bk=gbod(vid,date);
     if(bk){setModal({type:"detail",vehicleId:vid,booking:bk,date});}
-    else{setForm({vehicleId:vid,start:spf?ps:date,end:spf?pe:date,client:"",phone:"",email:"",address:"",licenseNum:"",rate:"",deposit:"",notes:""});setModal({type:"add",vehicleId:vid,date});}
+    else{setForm({vehicleId:vid,start:spf?ps:date,end:spf?pe:date,client:"",phone:"",email:"",address:"",licenseNum:"",rate:"",deposit:"",notes:"",pickupLocation:"agence",dropLocation:"agence"});setModal({type:"add",vehicleId:vid,date});}
   };
   const openEdit=bk=>{setForm({...bk});setModal({type:"edit",booking:bk});};
   const saveBk=async()=>{
     if(!form.client||!form.start||!form.end||!form.rate)return;
     if(pd(form.end)<pd(form.start))return;
     setSyncing(true);
-    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||""};
+    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||"",pickup_location:form.pickupLocation||"agence",drop_location:form.dropLocation||"agence"};
     try{
       if(modal.type==="add"||modal.type==="add-g"){const[r]=await dbIns("bookings",p);setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");}
       else{await dbUpd("bookings",form.id,p);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));showT("Réservation modifiée ✓");}
@@ -172,7 +643,7 @@ export default function App(){
     setSyncing(false);setModal(null);
   };
   const delE=async id=>{setSyncing(true);await dbDel("expenses",id);setExpenses(prev=>prev.filter(e=>e.id!==id));setModal(null);showT("Supprimée","info");setSyncing(false);};
-  const openNewR=()=>{setForm({vehicleId:vehicles[0]?.id||"",start:spf?ps:today,end:spf?pe:ad(today,1),client:"",phone:"",email:"",address:"",licenseNum:"",rate:"",deposit:"",notes:""});setModal({type:"add-g"});};
+  const openNewR=()=>{setForm({vehicleId:vehicles[0]?.id||"",start:spf?ps:today,end:spf?pe:ad(today,1),client:"",phone:"",email:"",address:"",licenseNum:"",rate:"",deposit:"",notes:"",pickupLocation:"agence",dropLocation:"agence"});setModal({type:"add-g"});};
   const exportPDF=(b,v)=>{const bm={...b,...cex};const html=cHTML(bm,v,cco);const w=window.open("","_blank","width=950,height=1100");if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);};
 
   const aip=useMemo(()=>{if(!spf||!ps||!pe)return vehicles;return vehicles.filter(v=>avail(v.id,ps,pe,bookings,undefined));},[vehicles,bookings,spf,ps,pe]);
@@ -208,7 +679,7 @@ export default function App(){
   const btnS={background:S2,border:"none",color:"#94A3B8",padding:"7px 14px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600};
   const pg={padding:mob?"12px 14px 88px":"20px 32px 40px",maxWidth:mob?undefined:1240,margin:mob?undefined:"0 auto",paddingTop:HH+16};
 
-  const TABS=[{id:"calendar",icon:"📅",label:"Calendrier"},{id:"fleet",icon:"🚗",label:"Flotte"},{id:"treasury",icon:"💰",label:"Trésorerie"},{id:"contracts",icon:"📄",label:"Contrats"}];
+  const TABS=[{id:"calendar",icon:"📅",label:"Calendrier"},{id:"fleet",icon:"🚗",label:"Flotte"},{id:"treasury",icon:"💰",label:"Trésorerie"},{id:"contracts",icon:"📄",label:"Contrats"},{id:"edl",icon:"🔍",label:"État des lieux"}];
 
   if(loading)return(
     <div style={{minHeight:"100dvh",background:BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
@@ -605,7 +1076,7 @@ export default function App(){
                   {bookings.sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
                     const v=vehicles.find(v=>v.id===b.vehicleId),isSel=cbid===b.id;
                     return(
-                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
+                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
                         <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
                         <div style={{fontSize:9,color:"#64748B",marginTop:1}}>{v?.name||"?"} · {fd(b.start)} → {fd(b.end)}</div>
                         <div style={{fontSize:11,fontWeight:700,color:"#F59E0B",marginTop:1}}>{b.rate*gdb(b.start,b.end)} €</div>
@@ -637,8 +1108,11 @@ export default function App(){
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                     <div style={{background:BG,borderRadius:8,padding:"9px"}}><div style={{fontSize:9,color:"#64748B",marginBottom:2}}>VÉHICULE</div><div style={{fontSize:12,fontWeight:700,color:"#F1F5F9"}}>{scv?.name}</div><div style={{fontSize:10,color:"#475569"}}>{scv?.plate}</div></div>
                     <div style={{background:BG,borderRadius:8,padding:"9px"}}><div style={{fontSize:9,color:"#64748B",marginBottom:2}}>PÉRIODE</div><div style={{fontSize:11,fontWeight:700,color:"#F1F5F9"}}>{fd(scb.start)}</div><div style={{fontSize:10,color:"#475569"}}>→ {fd(scb.end)}</div></div>
-                    <div style={{background:BG,borderRadius:8,padding:"9px"}}><div style={{fontSize:9,color:"#64748B",marginBottom:2}}>TOTAL</div><div style={{fontSize:15,fontWeight:800,color:"#F59E0B"}}>{(scb.rate*gdb(scb.start,scb.end)).toLocaleString("fr-FR")} €</div></div>
+                    <div style={{background:BG,borderRadius:8,padding:"9px"}}><div style={{fontSize:9,color:"#64748B",marginBottom:2}}>LOCATION</div><div style={{fontSize:15,fontWeight:800,color:"#F59E0B"}}>{(scb.rate*gdb(scb.start,scb.end)).toLocaleString("fr-FR")} €</div></div>
                     <div style={{background:BG,borderRadius:8,padding:"9px"}}><div style={{fontSize:9,color:"#64748B",marginBottom:2}}>CAUTION (€)</div><input type="number" value={cex.deposit||0} onChange={e=>setCex({...cex,deposit:Number(e.target.value)})} style={{width:"100%",background:"transparent",border:"none",color:"#F1F5F9",fontSize:15,fontWeight:800,outline:"none"}}/></div>
+                    <div style={{background:BG,borderRadius:8,padding:"9px"}}><div style={{fontSize:9,color:"#F59E0B",marginBottom:2,fontWeight:700}}>FRAIS ADDITIONNELS (€)</div><input type="number" value={cex.extraFees||0} onChange={e=>setCex({...cex,extraFees:Number(e.target.value)})} style={{width:"100%",background:"transparent",border:"none",color:"#F59E0B",fontSize:15,fontWeight:800,outline:"none"}}/></div>
+                    <div style={{background:BG,borderRadius:8,padding:"9px",gridColumn:"1/-1"}}><div style={{fontSize:9,color:"#64748B",marginBottom:4}}>DÉTAIL FRAIS ADDITIONNELS</div><input value={cex.extraFeesNote||""} onChange={e=>setCex({...cex,extraFeesNote:e.target.value})} placeholder="Ex: Dépôt aéroport, nettoyage, retard..." style={{width:"100%",background:"transparent",border:"none",color:"#E2E8F0",fontSize:12,outline:"none"}}/></div>
+                    <div style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",borderRadius:8,padding:"9px",gridColumn:"1/-1",textAlign:"center"}}><div style={{fontSize:9,color:"rgba(255,255,255,0.7)",marginBottom:2}}>TOTAL GÉNÉRAL (location + frais)</div><div style={{fontSize:18,fontWeight:900,color:"#fff"}}>{((scb.rate*gdb(scb.start,scb.end))+(Number(cex.extraFees)||0)).toLocaleString("fr-FR")} €</div></div>
                   </div>
                 </div>
                 <button onClick={()=>exportPDF({...scb,...cex},scv)} style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"13px 20px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:"0 4px 20px rgba(59,130,246,.4)"}}>
@@ -650,7 +1124,12 @@ export default function App(){
         </div>
       </div>}
 
-      {/* ── MODALS ── */}
+      {/* ── ÉTAT DES LIEUX ── */}
+      {page==="edl"&&<div style={pg}>
+        <EdlPage vehicles={vehicles} bookings={bookings} mob={mob} BG={BG} S1={S1} S2={S2} S3={S3} card={card} btnP={btnP} fd={fd} fds={fds}/>
+      </div>}
+
+      {/* ── MODALS ── */}}
       {modal&&!dc?.type?.startsWith("v")&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",alignItems:mob?"flex-end":"center",justifyContent:"center",zIndex:250,padding:mob?0:16}} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
           <div style={{background:S1,borderRadius:mob?"18px 18px 0 0":"18px",width:"100%",maxWidth:mob?"100%":490,border:"1px solid "+S2,boxShadow:"0 20px 60px rgba(0,0,0,.7)",maxHeight:mob?"92vh":"88vh",overflowY:"auto"}}>
@@ -678,7 +1157,7 @@ export default function App(){
                   </div>
                   <div style={{padding:"10px 22px 22px",display:"flex",gap:7,flexWrap:"wrap"}}>
                     <button onClick={()=>openEdit(b)} style={{flex:1,background:"#3B82F6",border:"none",color:"#fff",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>✏️ Modifier</button>
-                    <button onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0});setModal(null);}} style={{flex:1,background:"#1a1a2e30",border:"1px solid #3B82F640",color:"#3B82F6",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>📄 Contrat</button>
+                    <button onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});setModal(null);}} style={{flex:1,background:"#1a1a2e30",border:"1px solid #3B82F640",color:"#3B82F6",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>📄 Contrat</button>
                     <button onClick={()=>setDc(b.id)} style={{flex:1,background:"#EF444420",border:"1px solid #EF444440",color:"#EF4444",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>🗑</button>
                   </div>
                   {dc===b.id&&<div style={{padding:"0 22px 18px"}}><div style={{background:"#EF444415",border:"1px solid #EF444430",borderRadius:8,padding:"11px"}}><div style={{fontSize:11,color:"#EF4444",marginBottom:9,fontWeight:600}}>Confirmer la suppression ?</div><div style={{display:"flex",gap:6}}><button onClick={()=>delBk(b.id)} style={{flex:1,background:"#EF4444",border:"none",color:"#fff",padding:"7px",borderRadius:6,cursor:"pointer",fontWeight:600,fontSize:11}}>Oui</button><button onClick={()=>setDc(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"7px",borderRadius:6,cursor:"pointer",fontSize:11}}>Non</button></div></div></div>}
@@ -710,6 +1189,10 @@ export default function App(){
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}><Fld label="Téléphone" value={form.phone} onChange={val=>setForm({...form,phone:val})} placeholder="06 00 00 00 00"/><Fld label="Email" value={form.email} onChange={val=>setForm({...form,email:val})} placeholder="client@email.fr"/></div>
                     <Fld label="Adresse" value={form.address} onChange={val=>setForm({...form,address:val})} placeholder="12 rue de la Paix..."/>
                     <Fld label="N° Permis" value={form.licenseNum} onChange={val=>setForm({...form,licenseNum:val})} placeholder="123456789012"/>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                      <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>🏁 LIEU DE RÉCUPÉRATION</label><div style={{display:"flex",gap:5}}><button type="button" onClick={()=>setForm({...form,pickupLocation:"agence"})} style={{flex:1,background:(form.pickupLocation||"agence")==="agence"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>🏢 Agence</button><button type="button" onClick={()=>setForm({...form,pickupLocation:"aeroport"})} style={{flex:1,background:form.pickupLocation==="aeroport"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>✈️ Aéroport</button></div></div>
+                      <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>🏁 LIEU DE DÉPOSE</label><div style={{display:"flex",gap:5}}><button type="button" onClick={()=>setForm({...form,dropLocation:"agence"})} style={{flex:1,background:(form.dropLocation||"agence")==="agence"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>🏢 Agence</button><button type="button" onClick={()=>setForm({...form,dropLocation:"aeroport"})} style={{flex:1,background:form.dropLocation==="aeroport"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>✈️ Aéroport</button></div></div>
+                    </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>DÉBUT</label><input type="date" value={form.start||""} onChange={e=>setForm({...form,start:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>FIN</label><input type="date" value={form.end||""} onChange={e=>setForm({...form,end:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
