@@ -272,16 +272,17 @@ export default function App(){
             </div>
           </div>
         ):(
-          <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:10}}>
-            <div style={{display:"flex",alignItems:"center",gap:5}}>
+          <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:10,flexWrap:"nowrap"}}>
+            <div style={{display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
               <button onClick={()=>setSelDate(ad(selDate,-1))} style={{...btnS,padding:"6px 10px"}}>‹</button>
               <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"6px 9px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"}}/>
               <button onClick={()=>setSelDate(ad(selDate,1))} style={{...btnS,padding:"6px 10px"}}>›</button>
             </div>
-            <button onClick={()=>setSelDate(today)} style={{...btnS,background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"",color:selDate===today?"#fff":"#94A3B8"}}>Aujourd'hui</button>
-            <button onClick={openNewR} style={{background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"7px 13px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>＋ Nouvelle réservation</button>
-            <div style={{marginLeft:"auto",display:"flex",gap:3,background:S2,borderRadius:9,padding:3}}>
-              {["day","week"].map(m=><button key={m} onClick={()=>setVm(m)} style={{background:vm===m?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm===m?"#fff":"#64748B",padding:"5px 12px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600}}>{m==="day"?"Jour":"Semaine"}</button>)}
+            <button onClick={()=>setSelDate(today)} style={{...btnS,flexShrink:0,background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"",color:selDate===today?"#fff":"#94A3B8"}}>Aujourd'hui</button>
+            <button onClick={openNewR} style={{flexShrink:0,background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"7px 13px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>＋ Nouvelle réservation</button>
+            <div style={{marginLeft:"auto",flexShrink:0,display:"flex",gap:3,background:S2,borderRadius:9,padding:3}}>
+              <button onClick={()=>setVm("day")} style={{background:vm==="day"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="day"?"#fff":"#64748B",padding:"7px 16px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:600}}>📅 Jour</button>
+              <button onClick={()=>setVm("week")} style={{background:vm==="week"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="week"?"#fff":"#64748B",padding:"7px 16px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:600}}>📆 Semaine</button>
             </div>
           </div>
         )}
