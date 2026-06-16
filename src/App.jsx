@@ -959,9 +959,9 @@ export default function App(){
       {page==="calendar"&&<div style={pg}>
         {/* CONTROLES DESKTOP */}
         {!mob&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-          <button onClick={()=>setSelDate(ad(selDate,-1))} style={{background:S2,border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
+          <button onClick={()=>setSelDate(ad(selDate,vm==="week"?-7:-1))} style={{background:S2,border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
           <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"7px 12px",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer",flexShrink:0}}/>
-          <button onClick={()=>setSelDate(ad(selDate,1))} style={{background:S2,border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
+          <button onClick={()=>setSelDate(ad(selDate,vm==="week"?7:1))} style={{background:S2,border:"none",color:"#E2E8F0",width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
           <button onClick={()=>setSelDate(today)} style={{background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600,flexShrink:0}}>Aujourd'hui</button>
           <button onClick={openNewR} style={{background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,flexShrink:0}}>＋ Nouvelle réservation</button>
           <div style={{marginLeft:"auto",display:"flex",gap:3,background:S2,borderRadius:10,padding:4,flexShrink:0}}>
@@ -974,9 +974,9 @@ export default function App(){
         {mob&&<div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
           {/* Ligne 1 : navigation date */}
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={()=>setSelDate(ad(selDate,-1))} style={{background:S2,border:"none",color:"#E2E8F0",width:44,height:44,borderRadius:10,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
+            <button onClick={()=>setSelDate(ad(selDate,vm==="week"?-7:-1))} style={{background:S2,border:"none",color:"#E2E8F0",width:44,height:44,borderRadius:10,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
             <input type="date" value={selDate} onChange={e=>setSelDate(e.target.value)} style={{flex:1,background:S2,border:"1px solid "+S3,color:"#E2E8F0",padding:"11px 12px",borderRadius:10,fontSize:15,fontWeight:700,cursor:"pointer",textAlign:"center"}}/>
-            <button onClick={()=>setSelDate(ad(selDate,1))} style={{background:S2,border:"none",color:"#E2E8F0",width:44,height:44,borderRadius:10,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
+            <button onClick={()=>setSelDate(ad(selDate,vm==="week"?7:1))} style={{background:S2,border:"none",color:"#E2E8F0",width:44,height:44,borderRadius:10,cursor:"pointer",fontSize:22,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>›</button>
           </div>
           {/* Ligne 2 : Aujourd'hui + Nouvelle réservation */}
           <div style={{display:"flex",gap:8}}>
