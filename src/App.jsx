@@ -670,7 +670,6 @@ export default function App(){
   const[page,setPage]=useState("calendar");
   const[dc,setDc]=useState(null);
   const[toast,setToast]=useState(null);
-  const[ptr,setPtr]=useState(false); // pull-to-refresh
   const[logoMenu,setLogoMenu]=useState(false);
   const[selClient,setSelClient]=useState(null);
   const[clientSuggest,setClientSuggest]=useState(false);
@@ -679,11 +678,6 @@ export default function App(){
   const[dcClient,setDcClient]=useState(null);
   const[dcExport,setDcExport]=useState(null);
   const[clientForm,setClientForm]=useState({phone:"",email:"",address:"",licenseNum:"",licenseDate:"",idNum:""});
-  const[ptrY,setPtrY]=useState(0);
-  const PTR_THRESHOLD=70;
-  const onTouchStart=e=>{if(window.scrollY===0)setPtrY(e.touches[0].clientY);};
-  const onTouchMove=e=>{if(ptrY&&window.scrollY===0){const dy=e.touches[0].clientY-ptrY;if(dy>10)setPtr(dy>PTR_THRESHOLD);}};
-  const onTouchEnd=()=>{if(ptr){loadAll();showT("Actualisation…","info");}setPtr(false);setPtrY(0);};
 
   const[tYear,setTYear]=useState(TY);
   const[tMonth,setTMonth]=useState(TM);
@@ -916,15 +910,9 @@ export default function App(){
   );
 
   return(
-    <div style={{minHeight:"100dvh",width:"100%",background:BG,color:"#E2E8F0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden"}} onTouchStart={mob?onTouchStart:undefined} onTouchMove={mob?onTouchMove:undefined} onTouchEnd={mob?onTouchEnd:undefined}>
+    <div style={{minHeight:"100dvh",width:"100%",background:BG,color:"#E2E8F0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden"}}>
       <style>{"@keyframes spin{to{transform:rotate(360deg)}}input[type='date']::-webkit-calendar-picker-indicator{filter:invert(.5);cursor:pointer;}*{box-sizing:border-box;}"}</style>
-      {/* PULL TO REFRESH INDICATOR */}
-      {mob&&ptr&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:500,display:"flex",justifyContent:"center",paddingTop:"calc(env(safe-area-inset-top,0px) + 8px)"}}>
-        <div style={{background:"#3B82F6",color:"#fff",padding:"6px 18px",borderRadius:20,fontSize:12,fontWeight:700,display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 12px rgba(59,130,246,.4)"}}>
-          <div style={{width:12,height:12,border:"2px solid rgba(255,255,255,.4)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .6s linear infinite"}}/>
-          Relâcher pour actualiser
-        </div>
-      </div>}
+
 
       {/* TOASTS */}
       {toast&&<div style={{position:"fixed",top:mob?8:16,right:mob?8:16,zIndex:3000,background:toast.type==="success"?"#10B981":toast.type==="error"?"#EF4444":"#64748B",color:"#fff",padding:"9px 14px",borderRadius:9,fontWeight:600,fontSize:13,boxShadow:"0 4px 20px rgba(0,0,0,.5)"}}>{toast.msg}</div>}
@@ -1457,7 +1445,7 @@ export default function App(){
               <Fld label="Email" value={clientForm.email} onChange={v=>setClientForm({...clientForm,email:v})} placeholder="client@email.fr"/>
               <Fld label="Adresse" value={clientForm.address} onChange={v=>setClientForm({...clientForm,address:v})} placeholder="12 rue de la Paix..."/>
               <Fld label="N° Permis" value={clientForm.licenseNum} onChange={v=>setClientForm({...clientForm,licenseNum:v})} placeholder="123456789012"/>
-              <div><label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:5}}>DATE OBTENTION PERMIS</label><input type="date" value={clientForm.licenseDate||""} onChange={e=>setClientForm({...clientForm,licenseDate:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"9px 11px",borderRadius:7,fontSize:13,boxSizing:"border-box"}}/></div>
+              <div style={{width:"100%",minWidth:0}}><label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:5}}>DATE OBTENTION PERMIS</label><input type="date" value={clientForm.licenseDate||""} onChange={e=>setClientForm({...clientForm,licenseDate:e.target.value})} style={{width:"100%",maxWidth:"100%",minWidth:0,background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"9px 11px",borderRadius:7,fontSize:13,boxSizing:"border-box",display:"block"}}/></div>
               <Fld label="N° Pièce d'identité" value={clientForm.idNum} onChange={v=>setClientForm({...clientForm,idNum:v})} placeholder="CNI / Passeport..."/>
               <div style={{background:BG,borderRadius:8,padding:"10px 12px",fontSize:11,color:"#64748B"}}>
                 📋 {(clientsList.find(c=>c.name===selClient)?.bookingsCount)||0} réservation(s) enregistrée(s)
@@ -1626,13 +1614,13 @@ export default function App(){
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}><Fld label="Téléphone" value={form.phone} onChange={val=>setForm({...form,phone:val})} placeholder="06 00 00 00 00"/><Fld label="Email" value={form.email} onChange={val=>setForm({...form,email:val})} placeholder="client@email.fr"/></div>
                     <Fld label="Adresse" value={form.address} onChange={val=>setForm({...form,address:val})} placeholder="12 rue de la Paix..."/>
                     <Fld label="N° Permis" value={form.licenseNum} onChange={val=>setForm({...form,licenseNum:val})} placeholder="123456789012"/>
-                    <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>DATE OBTENTION PERMIS</label><input type="date" value={form.licenseDate||""} onChange={e=>setForm({...form,licenseDate:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
+                    <div style={{width:"100%",minWidth:0}}><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>DATE OBTENTION PERMIS</label><input type="date" value={form.licenseDate||""} onChange={e=>setForm({...form,licenseDate:e.target.value})} style={{width:"100%",maxWidth:"100%",minWidth:0,background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box",display:"block"}}/></div>
                     <Fld label="N° Pièce d'identité" value={form.idNum} onChange={val=>setForm({...form,idNum:val})} placeholder="CNI / Passeport..."/>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>🏁 LIEU DE RÉCUPÉRATION</label><div style={{display:"flex",gap:5}}><button type="button" onClick={()=>setForm({...form,pickupLocation:"agence"})} style={{flex:1,background:(form.pickupLocation||"agence")==="agence"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>🏢 Agence</button><button type="button" onClick={()=>setForm({...form,pickupLocation:"aeroport"})} style={{flex:1,background:form.pickupLocation==="aeroport"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>✈️ Aéroport</button></div></div>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>🏁 LIEU DE DÉPOSE</label><div style={{display:"flex",gap:5}}><button type="button" onClick={()=>setForm({...form,dropLocation:"agence"})} style={{flex:1,background:(form.dropLocation||"agence")==="agence"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>🏢 Agence</button><button type="button" onClick={()=>setForm({...form,dropLocation:"aeroport"})} style={{flex:1,background:form.dropLocation==="aeroport"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>✈️ Aéroport</button></div></div>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                    <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:9}}>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>DÉBUT</label><input type="date" value={form.start||""} onChange={e=>setForm({...form,start:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>FIN</label><input type="date" value={form.end||""} onChange={e=>setForm({...form,end:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
                     </div>
