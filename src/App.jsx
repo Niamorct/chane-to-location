@@ -560,7 +560,7 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
         {bookings.length===0
           ?<div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0"}}>Aucune réservation</div>
           :<div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:220,overflowY:"auto"}}>
-            {[...bookings].sort((a,b)=>new Date(b.start)-new Date(a.start)).map(b=>{
+            {[...bookings].sort((a,b)=>new Date(a.start)-new Date(b.start)).map(b=>{
               const vv=vehicles.find(v=>v.id===b.vehicleId),isSel=selBookingId===b.id;
               return(
                 <div key={b.id} onClick={()=>{setSelBookingId(b.id);setEdlIn({fuel:2,cleanIn:4,cleanOut:4,mileage:vv?.mileage||"",notes:"",damages:[],photos:[]});setEdlOut({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});}}
@@ -651,6 +651,7 @@ export default function App(){
   const mob=useIsMobile();
   const BG="#0F1117",S1="#161B27",S2="#1E2535",S3="#2D3748";
   const HH=mob?54:64;
+  const HEADER_H=mob?`calc(${HH}px + env(safe-area-inset-top, 0px))`:HH+"px";
 
   const[vehicles,setVehicles]=useState([]);
   const[bookings,setBookings]=useState([]);
@@ -664,6 +665,13 @@ export default function App(){
   const[page,setPage]=useState("calendar");
   const[dc,setDc]=useState(null);
   const[toast,setToast]=useState(null);
+  const[ptr,setPtr]=useState(false); // pull-to-refresh
+  const[ptrY,setPtrY]=useState(0);
+  const PTR_THRESHOLD=70;
+  const onTouchStart=e=>{if(window.scrollY===0)setPtrY(e.touches[0].clientY);};
+  const onTouchMove=e=>{if(ptrY&&window.scrollY===0){const dy=e.touches[0].clientY-ptrY;if(dy>10)setPtr(dy>PTR_THRESHOLD);}};
+  const onTouchEnd=()=>{if(ptr){loadAll();showT("Actualisation…","info");}setPtr(false);setPtrY(0);};
+
   const[tYear,setTYear]=useState(TY);
   const[tMonth,setTMonth]=useState(TM);
   const[tFilter,setTFilter]=useState("month");
@@ -671,6 +679,7 @@ export default function App(){
   const[ps,setPs]=useState(today);
   const[pe,setPe]=useState(ad(today,1));
   const[spf,setSpf]=useState(false);
+  const[statusFilter,setStatusFilter]=useState("all"); // "all"|"loue"|"dispo"
   const[cbid,setCbid]=useState(null);
   const[cco,setCco]=useState({...CO});
   const[cex,setCex]=useState({email:"",address:"",licenseNum:"",deposit:0,extraFees:0,extraFeesNote:"",sigLoueur:null,sigLocataire:null});
@@ -812,16 +821,23 @@ export default function App(){
   );
 
   return(
-    <div style={{minHeight:"100dvh",width:"100%",background:BG,color:"#E2E8F0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden"}}>
+    <div style={{minHeight:"100dvh",width:"100%",background:BG,color:"#E2E8F0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden"}} onTouchStart={mob?onTouchStart:undefined} onTouchMove={mob?onTouchMove:undefined} onTouchEnd={mob?onTouchEnd:undefined}>
       <style>{"@keyframes spin{to{transform:rotate(360deg)}}input[type='date']::-webkit-calendar-picker-indicator{filter:invert(.5);cursor:pointer;}*{box-sizing:border-box;}"}</style>
+      {/* PULL TO REFRESH INDICATOR */}
+      {mob&&ptr&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:500,display:"flex",justifyContent:"center",paddingTop:"calc(env(safe-area-inset-top,0px) + 8px)"}}>
+        <div style={{background:"#3B82F6",color:"#fff",padding:"6px 18px",borderRadius:20,fontSize:12,fontWeight:700,display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 12px rgba(59,130,246,.4)"}}>
+          <div style={{width:12,height:12,border:"2px solid rgba(255,255,255,.4)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin .6s linear infinite"}}/>
+          Relâcher pour actualiser
+        </div>
+      </div>}
 
       {/* TOASTS */}
       {toast&&<div style={{position:"fixed",top:mob?8:16,right:mob?8:16,zIndex:3000,background:toast.type==="success"?"#10B981":toast.type==="error"?"#EF4444":"#64748B",color:"#fff",padding:"9px 14px",borderRadius:9,fontWeight:600,fontSize:13,boxShadow:"0 4px 20px rgba(0,0,0,.5)"}}>{toast.msg}</div>}
       {syncing&&<div style={{position:"fixed",top:mob?8:16,left:"50%",transform:"translateX(-50%)",zIndex:3000,background:S1,border:"1px solid "+S3,color:"#94A3B8",padding:"5px 14px",borderRadius:20,fontSize:11,display:"flex",alignItems:"center",gap:6}}><div style={{width:11,height:11,border:"2px solid "+S2,borderTopColor:"#3B82F6",borderRadius:"50%",animation:"spin .8s linear infinite"}}/>Sync…</div>}
 
       {/* HEADER FIXE */}
-      <header style={{background:S1,borderBottom:"1px solid "+S2,padding:mob?"0 12px":"0 32px",position:"fixed",top:0,left:0,right:0,zIndex:200,height:HH}}>
-        <div style={{maxWidth:1240,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:"100%",gap:8}}>
+      <header style={{background:S1,borderBottom:"1px solid "+S2,padding:mob?"0 12px":"0 32px",position:"fixed",top:0,left:0,right:0,zIndex:200,paddingTop:mob?"env(safe-area-inset-top,0px)":0,height:mob?"calc("+HH+"px + env(safe-area-inset-top, 0px))":HH}}>
+        <div style={{maxWidth:1240,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:HH,gap:8}}>
           <div style={{display:"flex",alignItems:"center",gap:mob?8:10,flexShrink:0}}>
             <img src={LOGO} alt="" style={{width:mob?34:42,height:mob?34:42,objectFit:"contain",filter:"brightness(10)"}}/>
             {!mob&&<div><div style={{fontWeight:800,fontSize:15,color:"#F1F5F9"}}>Chane-To Location</div><div style={{fontSize:10,color:"#64748B"}}>Gestion de flotte · 0693 01 00 94</div></div>}
@@ -854,7 +870,7 @@ export default function App(){
           <button onClick={()=>setSelDate(today)} style={{background:selDate===today?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600,flexShrink:0}}>Aujourd'hui</button>
           <button onClick={openNewR} style={{background:"linear-gradient(135deg,#10B981,#3B82F6)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:700,flexShrink:0}}>＋ Nouvelle réservation</button>
           <div style={{marginLeft:"auto",display:"flex",gap:3,background:S2,borderRadius:10,padding:4,flexShrink:0}}>
-            <button onClick={()=>setVm("day")} style={{background:vm==="day"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="day"?"#fff":"#94A3B8",padding:"7px 20px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}>📅 Jour</button>
+            <button onClick={()=>{setVm("day");setStatusFilter("all");}} style={{background:vm==="day"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="day"?"#fff":"#94A3B8",padding:"7px 20px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}>📅 Jour</button>
             <button onClick={()=>setVm("week")} style={{background:vm==="week"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="week"?"#fff":"#94A3B8",padding:"7px 20px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}>📆 Semaine</button>
           </div>
         </div>}
@@ -874,7 +890,7 @@ export default function App(){
           </div>
           {/* Ligne 3 : Jour / Semaine */}
           <div style={{display:"flex",gap:0,background:S2,borderRadius:10,padding:4}}>
-            <button onClick={()=>setVm("day")} style={{flex:1,background:vm==="day"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="day"?"#fff":"#64748B",padding:"10px 0",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>📅 Jour</button>
+            <button onClick={()=>{setVm("day");setStatusFilter("all");}} style={{flex:1,background:vm==="day"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="day"?"#fff":"#64748B",padding:"10px 0",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>📅 Jour</button>
             <button onClick={()=>setVm("week")} style={{flex:1,background:vm==="week"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:vm==="week"?"#fff":"#64748B",padding:"10px 0",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>📆 Semaine</button>
           </div>
         </div>}
@@ -914,12 +930,18 @@ export default function App(){
 
         {/* Stats */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:mob?8:10,marginBottom:14}}>
-          {si.map(s=>(
-            <div key={s.l} style={{background:s.bg,border:"1px solid "+s.c+"30",borderRadius:10,padding:mob?"10px 8px":"12px 14px",textAlign:"center"}}>
-              <div style={{fontSize:mob?18:22,fontWeight:700,color:s.c,lineHeight:1}}>{s.v}</div>
-              <div style={{fontSize:mob?9:11,color:"#64748B",marginTop:3,lineHeight:1.2}}>{s.l}</div>
-            </div>
-          ))}
+          {si.map((s,i)=>{
+            const filterKey=!spf&&vm==="day"?(i===0?"dispo":i===1?"loue":null):null;
+            const isActive=filterKey&&statusFilter===filterKey;
+            return(
+              <div key={s.l} onClick={()=>{if(filterKey)setStatusFilter(statusFilter===filterKey?"all":filterKey);}}
+                style={{background:isActive?s.c+"25":s.bg,border:"2px solid "+(isActive?s.c:s.c+"30"),borderRadius:10,padding:mob?"10px 8px":"12px 14px",textAlign:"center",cursor:filterKey?"pointer":"default",transition:"all .15s",userSelect:"none"}}>
+                <div style={{fontSize:mob?18:22,fontWeight:700,color:s.c,lineHeight:1}}>{s.v}</div>
+                <div style={{fontSize:mob?9:11,color:"#64748B",marginTop:3,lineHeight:1.2}}>{s.l}</div>
+                {filterKey&&<div style={{fontSize:8,color:s.c,fontWeight:700,marginTop:3,opacity:isActive?1:.6}}>{isActive?"✓ Actif":"Filtrer"}</div>}
+              </div>
+            );
+          })}
         </div>
 
         {/* Vue Jour */}
@@ -962,7 +984,10 @@ export default function App(){
         {!spf&&vm==="day"&&(
           <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"repeat(auto-fill,minmax(270px,1fr))",gap:10}}>
             {vehicles.length===0&&<div style={{...card,textAlign:"center",padding:"36px",color:"#475569",gridColumn:"1/-1"}}>Aucun véhicule. Ajoutez-en dans "Flotte".</div>}
-            {vehicles.map(vehicle=>{
+            {[...vehicles]
+              .sort((a,b)=>{const aB=!!gbod(a.id,selDate),bB=!!gbod(b.id,selDate);return aB===bB?0:aB?-1:1;})
+              .filter(v=>statusFilter==="all"||( statusFilter==="loue"&&!!gbod(v.id,selDate))||(statusFilter==="dispo"&&!gbod(v.id,selDate)))
+              .map(vehicle=>{
               const bk=gbod(vehicle.id,selDate),isB=!!bk;
               return(
                 <div key={vehicle.id} onClick={()=>openDetail(vehicle.id,selDate)} style={{background:isB?"linear-gradient(135deg,"+vehicle.color+"18,"+vehicle.color+"08)":S1,border:"1.5px solid "+(isB?vehicle.color+"60":S2),borderRadius:13,padding:mob?13:16,cursor:"pointer",position:"relative",overflow:"hidden"}}>
@@ -1200,7 +1225,7 @@ export default function App(){
               <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>📋 Réservation</div>
               {bookings.length===0?<div style={{color:"#475569",fontSize:11,textAlign:"center",padding:"14px 0"}}>Aucune réservation</div>:(
                 <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:mob?180:360,overflowY:"auto"}}>
-                  {bookings.sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
+                  {[...bookings].sort((a,b)=>pd(a.start)-pd(b.start)).map(b=>{
                     const v=vehicles.find(v=>v.id===b.vehicleId),isSel=cbid===b.id;
                     return(
                       <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
