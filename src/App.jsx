@@ -21,7 +21,7 @@ const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r
 const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence"});
 const me=r=>({id:r.id,vehicleId:r.vehicle_id,date:r.date,amount:r.amount,category:r.category,note:r.note||""});
 const mc=r=>({id:r.id,name:r.name,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",notes:r.notes||"",createdAt:r.created_at});
-const mx=r=>({id:r.id,type:r.type,client:r.client,vehicleName:r.vehicle_name||"",vehiclePlate:r.vehicle_plate||"",dateStart:r.date_start||"",dateEnd:r.date_end||"",createdAt:r.created_at,bookingId:r.booking_id});
+const mx=r=>({id:r.id,type:r.type,client:r.client,vehicleName:r.vehicle_name||"",vehiclePlate:r.vehicle_plate||"",dateStart:r.date_start||"",dateEnd:r.date_end||"",createdAt:r.created_at,bookingId:r.booking_id,html:r.html_content||""});
 
 const pd=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
 const fd=s=>pd(s).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});
@@ -541,14 +541,14 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
     openPDFBlob(html,"EDL_Recuperation_"+selBooking.client.replace(/ /g,"_")+".html");
-    if(logExport)logExport("edl_in",selBooking,selVehicle);
+    if(logExport)logExport("edl_in",selBooking,selVehicle,html);
   }
 
   function printOut(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
     openPDFBlob(html,"EDL_Depose_"+selBooking.client.replace(/ /g,"_")+".html");
-    if(logExport)logExport("edl_out",selBooking,selVehicle);
+    if(logExport)logExport("edl_out",selBooking,selVehicle,html);
   }
 
   return(
@@ -675,6 +675,10 @@ export default function App(){
   const[logoMenu,setLogoMenu]=useState(false);
   const[selClient,setSelClient]=useState(null);
   const[clientSuggest,setClientSuggest]=useState(false);
+  const[clientSort,setClientSort]=useState("az");
+  const[docSort,setDocSort]=useState("desc");
+  const[dcClient,setDcClient]=useState(null);
+  const[dcExport,setDcExport]=useState(null);
   const[clientForm,setClientForm]=useState({phone:"",email:"",address:"",licenseNum:"",licenseDate:"",idNum:""});
   const[ptrY,setPtrY]=useState(0);
   const PTR_THRESHOLD=70;
@@ -792,12 +796,32 @@ export default function App(){
       else{const[r]=await dbIns("clients",payload);if(r)setClients(prev=>[...prev,mc(r)]);}
     }catch(e){/* table clients absente ou erreur silencieuse */}
   };
-  const logExport=async(type,b,v)=>{
+  const logExport=async(type,b,v,html)=>{
     try{
-      const payload={type,client:b.client,vehicle_name:v?.name||"",vehicle_plate:v?.plate||"",date_start:b.start,date_end:b.end,booking_id:b.id};
+      const payload={type,client:b.client,vehicle_name:v?.name||"",vehicle_plate:v?.plate||"",date_start:b.start,date_end:b.end,booking_id:b.id,html_content:html||""};
       const[r]=await dbIns("document_exports",payload);
       if(r)setExportsLog(prev=>[mx(r),...prev]);
     }catch(e){/* table document_exports absente ou erreur silencieuse */}
+  };
+  const deleteExport=async id=>{
+    try{await dbDel("document_exports",id);setExportsLog(prev=>prev.filter(x=>x.id!==id));showT("Export supprimé","info");}catch(e){showT("Erreur","error");}
+  };
+  const deleteClient=async id=>{
+    try{await dbDel("clients",id);setClients(prev=>prev.filter(c=>c.id!==id));showT("Client supprimé","info");}catch(e){showT("Erreur","error");}
+  };
+  const viewExport=html=>{
+    if(!html)return;
+    if(isPWA()){
+      const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.target="_blank";a.rel="noopener noreferrer";
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
+    }else{
+      const w=window.open("","_blank","width=950,height=1100");
+      if(!w)return;w.document.write(html);w.document.close();
+    }
   };
   const exportPDF=(b,v)=>{
     const bm={...b,...cex};
@@ -805,7 +829,7 @@ export default function App(){
     const cn="Contrat_CTR-"+new Date().getFullYear()+"-"+String(b.id).padStart(4,"0")+"_"+b.client.replace(/\s+/g,"_")+".html";
     openPDF(html,cn);
     upsertClient(b.client,{phone:bm.phone,email:bm.email,address:bm.address,licenseNum:bm.licenseNum});
-    logExport("contract",b,v);
+    logExport("contract",b,v,html);
   };
 
 
@@ -1361,29 +1385,39 @@ export default function App(){
 
       {/* ── BASE CLIENTS ── */}
       {page==="clients"&&<div style={pg}>
-        <div style={{marginBottom:18}}>
-          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>👥 Clients</div>
-          <div style={{fontSize:11,color:"#475569"}}>{clientsList.length} client{clientsList.length>1?"s":""} · ordre alphabétique</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:8}}>
+          <div>
+            <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>👥 Clients</div>
+            <div style={{fontSize:11,color:"#475569"}}>{clientsList.length} client{clientsList.length>1?"s":""}</div>
+          </div>
+          <div style={{display:"flex",gap:3,background:S2,borderRadius:9,padding:3}}>
+            <button onClick={()=>setClientSort(clientSort==="az"?"za":"az")} style={{background:clientSort==="az"||clientSort==="za"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:"#fff",padding:"6px 12px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>{clientSort==="za"?"Z → A":"A → Z"}</button>
+          </div>
         </div>
         {clientsList.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun client. Les clients apparaissent ici après une première réservation ou génération de contrat.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {clientsList.map(c=>(
-            <div key={c.name} onClick={()=>{setSelClient(c.name);setClientForm({phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum,licenseDate:c.licenseDate||"",idNum:c.idNum||""});}}
-              style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
-              <div style={{width:40,height:40,borderRadius:"50%",background:"#3B82F625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#3B82F6",flexShrink:0}}>{c.name.charAt(0).toUpperCase()}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{c.name}</div>
-                <div style={{fontSize:11,color:"#64748B",marginTop:2,display:"flex",gap:10,flexWrap:"wrap"}}>
-                  {c.phone&&<span>📞 {c.phone}</span>}
-                  {c.email&&<span>📧 {c.email}</span>}
+          {[...clientsList].sort((a,b)=>clientSort==="za"?b.name.localeCompare(a.name,"fr"):a.name.localeCompare(b.name,"fr")).map(c=>{
+            const dbRecord=clients.find(cl=>cl.name===c.name);
+            return(
+            <div key={c.name} style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12}}>
+              <div onClick={()=>{setSelClient(c.name);setClientForm({phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum,licenseDate:c.licenseDate||"",idNum:c.idNum||""});}} style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0,cursor:"pointer"}}>
+                <div style={{width:40,height:40,borderRadius:"50%",background:"#3B82F625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#3B82F6",flexShrink:0}}>{c.name.charAt(0).toUpperCase()}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{c.name}</div>
+                  <div style={{fontSize:11,color:"#64748B",marginTop:2,display:"flex",gap:10,flexWrap:"wrap"}}>
+                    {c.phone&&<span>📞 {c.phone}</span>}
+                    {c.email&&<span>📧 {c.email}</span>}
+                  </div>
                 </div>
               </div>
-              <div style={{flexShrink:0,textAlign:"right"}}>
-                <div style={{background:"#3B82F620",color:"#3B82F6",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{c.bookingsCount} résa{c.bookingsCount>1?"s":""}</div>
-              </div>
+              <div style={{background:"#3B82F620",color:"#3B82F6",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,flexShrink:0}}>{c.bookingsCount} résa{c.bookingsCount>1?"s":""}</div>
+              {dbRecord&&<button onClick={()=>setDcClient(dbRecord.id)} style={{background:"#EF444415",border:"1px solid #EF444430",color:"#EF4444",width:30,height:30,borderRadius:7,cursor:"pointer",fontSize:13,flexShrink:0}}>🗑</button>}
             </div>
-          ))}
+          );})}
         </div>}
+
+        {/* CONFIRMATION SUPPRESSION CLIENT */}
+        {dcClient&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:16}}><div style={{background:S1,borderRadius:15,width:"100%",maxWidth:360,border:"1px solid "+S2,padding:22}}><div style={{fontSize:15,fontWeight:700,color:"#EF4444",marginBottom:10}}>🗑 Supprimer ce client ?</div><div style={{fontSize:12,color:"#94A3B8",marginBottom:14}}>Ses réservations resteront, mais sa fiche client sera supprimée.</div><div style={{display:"flex",gap:7}}><button onClick={()=>setDcClient(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:600,fontSize:12}}>Annuler</button><button onClick={async()=>{await deleteClient(dcClient);setDcClient(null);}} style={{flex:1,background:"#EF4444",border:"none",color:"#fff",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12}}>Supprimer</button></div></div></div>}
 
         {/* FICHE CLIENT (panneau détail) */}
         {selClient&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",alignItems:mob?"flex-end":"center",justifyContent:"center",zIndex:250,padding:mob?0:16}} onClick={e=>e.target===e.currentTarget&&setSelClient(null)}>
@@ -1418,23 +1452,29 @@ export default function App(){
 
       {/* ── BASE CONTRATS (uniquement PDF exportés) ── */}
       {page==="contractsDB"&&<div style={pg}>
-        <div style={{marginBottom:18}}>
-          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>📄 Contrats exportés</div>
-          <div style={{fontSize:11,color:"#475569"}}>{exportsLog.filter(x=>x.type==="contract").length} export{exportsLog.filter(x=>x.type==="contract").length>1?"s":""} · ordre décroissant</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:8}}>
+          <div>
+            <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>📄 Contrats exportés</div>
+            <div style={{fontSize:11,color:"#475569"}}>{exportsLog.filter(x=>x.type==="contract").length} export{exportsLog.filter(x=>x.type==="contract").length>1?"s":""}</div>
+          </div>
+          <div style={{display:"flex",gap:3,background:S2,borderRadius:9,padding:3}}>
+            <button onClick={()=>setDocSort(docSort==="desc"?"asc":"desc")} style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"6px 12px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>{docSort==="desc"?"Plus récent":"Plus ancien"}</button>
+          </div>
         </div>
         {exportsLog.filter(x=>x.type==="contract").length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun contrat exporté. Générez un PDF depuis l'onglet "Contrats" pour qu'il apparaisse ici.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[...exportsLog].filter(x=>x.type==="contract").sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map(x=>{
+          {[...exportsLog].filter(x=>x.type==="contract").sort((a,b)=>docSort==="desc"?new Date(b.createdAt)-new Date(a.createdAt):new Date(a.createdAt)-new Date(b.createdAt)).map(x=>{
             const cn="CTR-"+new Date(x.dateStart).getFullYear()+"-"+String(x.bookingId).padStart(4,"0");
             return(
-              <div key={x.id} onClick={()=>{const b=bookings.find(bb=>bb.id===x.bookingId);if(b){setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",sigLoueur:null,sigLocataire:null});}else{setPage("contracts");}}}
-                style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
-                <div style={{width:40,height:40,borderRadius:10,background:"#8B5CF625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>📄</div>
-                <div style={{flex:1,minWidth:0}}>
+              <div key={x.id} style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12}}>
+                <div onClick={()=>viewExport(x.html)} style={{width:40,height:40,borderRadius:10,background:"#8B5CF625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,cursor:x.html?"pointer":"default"}}>📄</div>
+                <div onClick={()=>viewExport(x.html)} style={{flex:1,minWidth:0,cursor:x.html?"pointer":"default"}}>
                   <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{cn} — {x.client}</div>
                   <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{x.vehicleName||"?"} ({x.vehiclePlate||"?"}) · {x.dateStart?fd(x.dateStart):"?"} → {x.dateEnd?fd(x.dateEnd):"?"}</div>
+                  {x.html&&<div style={{fontSize:10,color:"#3B82F6",marginTop:2,fontWeight:600}}>👁 Cliquer pour consulter le PDF</div>}
                 </div>
-                <div style={{flexShrink:0,fontSize:10,color:"#475569"}}>{x.createdAt?new Date(x.createdAt).toLocaleDateString("fr-FR"):""}</div>
+                <div style={{flexShrink:0,fontSize:10,color:"#475569",textAlign:"right"}}>{x.createdAt?new Date(x.createdAt).toLocaleDateString("fr-FR"):""}</div>
+                <button onClick={()=>setDcExport(x.id)} style={{background:"#EF444415",border:"1px solid #EF444430",color:"#EF4444",width:30,height:30,borderRadius:7,cursor:"pointer",fontSize:13,flexShrink:0}}>🗑</button>
               </div>
             );
           })}
@@ -1443,27 +1483,36 @@ export default function App(){
 
       {/* ── BASE ÉTATS DES LIEUX (uniquement PDF exportés) ── */}
       {page==="edlDB"&&<div style={pg}>
-        <div style={{marginBottom:18}}>
-          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>🔍 États des lieux exportés</div>
-          <div style={{fontSize:11,color:"#475569"}}>{exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length} export{exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length>1?"s":""} · ordre décroissant</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:8}}>
+          <div>
+            <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>🔍 États des lieux exportés</div>
+            <div style={{fontSize:11,color:"#475569"}}>{exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length} export{exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length>1?"s":""}</div>
+          </div>
+          <div style={{display:"flex",gap:3,background:S2,borderRadius:9,padding:3}}>
+            <button onClick={()=>setDocSort(docSort==="desc"?"asc":"desc")} style={{background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"6px 12px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>{docSort==="desc"?"Plus récent":"Plus ancien"}</button>
+          </div>
         </div>
         {exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun état des lieux exporté. Générez un PDF depuis l'onglet "État des lieux" pour qu'il apparaisse ici.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[...exportsLog].filter(x=>x.type==="edl_in"||x.type==="edl_out").sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map(x=>(
-            <div key={x.id} onClick={()=>setPage("edl")}
-              style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:40,height:40,borderRadius:10,background:(x.type==="edl_in"?"#10B981":"#EF4444")+"25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🔍</div>
-              <div style={{flex:1,minWidth:0}}>
+          {[...exportsLog].filter(x=>x.type==="edl_in"||x.type==="edl_out").sort((a,b)=>docSort==="desc"?new Date(b.createdAt)-new Date(a.createdAt):new Date(a.createdAt)-new Date(b.createdAt)).map(x=>(
+            <div key={x.id} style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12}}>
+              <div onClick={()=>viewExport(x.html)} style={{width:40,height:40,borderRadius:10,background:(x.type==="edl_in"?"#10B981":"#EF4444")+"25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,cursor:x.html?"pointer":"default"}}>🔍</div>
+              <div onClick={()=>viewExport(x.html)} style={{flex:1,minWidth:0,cursor:x.html?"pointer":"default"}}>
                 <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{x.client}</div>
                 <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{x.vehicleName||"?"} ({x.vehiclePlate||"?"}) · {x.dateStart?fd(x.dateStart):"?"} → {x.dateEnd?fd(x.dateEnd):"?"}</div>
+                {x.html&&<div style={{fontSize:10,color:"#3B82F6",marginTop:2,fontWeight:600}}>👁 Cliquer pour consulter le PDF</div>}
               </div>
               <span style={{background:(x.type==="edl_in"?"#10B981":"#EF4444")+"20",color:x.type==="edl_in"?"#10B981":"#EF4444",padding:"3px 8px",borderRadius:20,fontSize:10,fontWeight:600,flexShrink:0}}>{x.type==="edl_in"?"Récupération":"Dépose"}</span>
+              <button onClick={()=>setDcExport(x.id)} style={{background:"#EF444415",border:"1px solid #EF444430",color:"#EF4444",width:30,height:30,borderRadius:7,cursor:"pointer",fontSize:13,flexShrink:0}}>🗑</button>
             </div>
           ))}
         </div>}
+
+        {/* CONFIRMATION SUPPRESSION EXPORT (commune contrats + edl) */}
+        {dcExport&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:16}}><div style={{background:S1,borderRadius:15,width:"100%",maxWidth:360,border:"1px solid "+S2,padding:22}}><div style={{fontSize:15,fontWeight:700,color:"#EF4444",marginBottom:10}}>🗑 Supprimer cet export ?</div><div style={{fontSize:12,color:"#94A3B8",marginBottom:14}}>Cette action est irréversible.</div><div style={{display:"flex",gap:7}}><button onClick={()=>setDcExport(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:600,fontSize:12}}>Annuler</button><button onClick={async()=>{await deleteExport(dcExport);setDcExport(null);}} style={{flex:1,background:"#EF4444",border:"none",color:"#fff",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12}}>Supprimer</button></div></div></div>}
       </div>}
 
-      {/* ── MODALS ── */}      {/* ── MODALS ── */}
+      {/* ── MODALS ── */}      {/* ── MODALS ── */}      {/* ── MODALS ── */}
       {modal&&!dc?.type?.startsWith("v")&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",alignItems:mob?"flex-end":"center",justifyContent:"center",zIndex:250,padding:mob?0:16}} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
           <div style={{background:S1,borderRadius:mob?"18px 18px 0 0":"18px",width:"100%",maxWidth:mob?"100%":490,border:"1px solid "+S2,boxShadow:"0 20px 60px rgba(0,0,0,.7)",maxHeight:mob?"92vh":"88vh",overflowY:"auto"}}>
