@@ -18,9 +18,9 @@ const MFR=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","S
 const CO={name:"Chane-To Location",address:"712 rue de la gare, 97440 Saint-André, La Réunion",phone:"+262693010094",email:"chanetolocation@gmail.com",siret:"89512496400027",rcs:"895 124 964"};
 
 const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",mileage:r.mileage||"",fuel:r.fuel||"Essence"});
-const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence"});
+const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence"});
 const me=r=>({id:r.id,vehicleId:r.vehicle_id,date:r.date,amount:r.amount,category:r.category,note:r.note||""});
-const mc=r=>({id:r.id,name:r.name,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",notes:r.notes||"",createdAt:r.created_at});
+const mc=r=>({id:r.id,name:r.name,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",notes:r.notes||"",createdAt:r.created_at});
 const mx=r=>({id:r.id,type:r.type,client:r.client,vehicleName:r.vehicle_name||"",vehiclePlate:r.vehicle_plate||"",dateStart:r.date_start||"",dateEnd:r.date_end||"",createdAt:r.created_at,bookingId:r.booking_id});
 
 const pd=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
@@ -674,7 +674,8 @@ export default function App(){
   const[ptr,setPtr]=useState(false); // pull-to-refresh
   const[logoMenu,setLogoMenu]=useState(false);
   const[selClient,setSelClient]=useState(null);
-  const[clientForm,setClientForm]=useState({phone:"",email:"",address:"",licenseNum:""});
+  const[clientSuggest,setClientSuggest]=useState(false);
+  const[clientForm,setClientForm]=useState({phone:"",email:"",address:"",licenseNum:"",licenseDate:"",idNum:""});
   const[ptrY,setPtrY]=useState(0);
   const PTR_THRESHOLD=70;
   const onTouchStart=e=>{if(window.scrollY===0)setPtrY(e.touches[0].clientY);};
@@ -720,11 +721,11 @@ export default function App(){
     if(!form.client||!form.start||!form.end||!form.rate)return;
     if(pd(form.end)<pd(form.start))return;
     setSyncing(true);
-    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||""};
+    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",license_date:form.licenseDate||null,id_num:form.idNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||""};
     try{
       if(modal.type==="add"||modal.type==="add-g"){const[r]=await dbIns("bookings",p);setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");}
       else{await dbUpd("bookings",form.id,p);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));showT("Réservation modifiée ✓");}
-      upsertClient(form.client,{phone:form.phone,email:form.email,address:form.address,licenseNum:form.licenseNum});
+      upsertClient(form.client,{phone:form.phone,email:form.email,address:form.address,licenseNum:form.licenseNum,licenseDate:form.licenseDate,idNum:form.idNum});
     }catch(e){showT("Erreur : "+String(e?.message||e),"error");}
     setSyncing(false);setModal(null);
   };
@@ -786,7 +787,7 @@ export default function App(){
   const upsertClient=async(name,info)=>{
     try{
       const existing=clients.find(c=>c.name.toLowerCase()===name.toLowerCase());
-      const payload={name,phone:info.phone||"",email:info.email||"",address:info.address||"",license_num:info.licenseNum||""};
+      const payload={name,phone:info.phone||"",email:info.email||"",address:info.address||"",license_num:info.licenseNum||"",license_date:info.licenseDate||null,id_num:info.idNum||""};
       if(existing){await dbUpd("clients",existing.id,payload);setClients(prev=>prev.map(c=>c.id===existing.id?{...c,...mc({...payload,id:existing.id})}:c));}
       else{const[r]=await dbIns("clients",payload);if(r)setClients(prev=>[...prev,mc(r)]);}
     }catch(e){/* table clients absente ou erreur silencieuse */}
@@ -814,12 +815,12 @@ export default function App(){
   const clientsList=useMemo(()=>{
     const map={};
     [...bookings].sort((a,b)=>pd(a.start)-pd(b.start)).forEach(b=>{
-      map[b.client]={name:b.client,phone:b.phone||"",email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",bookingsCount:(map[b.client]?.bookingsCount||0)+1,lastBooking:b.start};
+      map[b.client]={name:b.client,phone:b.phone||"",email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",licenseDate:b.licenseDate||"",idNum:b.idNum||"",bookingsCount:(map[b.client]?.bookingsCount||0)+1,lastBooking:b.start};
     });
     // Les infos enregistrées manuellement dans la fiche client (table clients) priment sur celles dérivées des réservations
     clients.forEach(c=>{
-      if(map[c.name]){map[c.name]={...map[c.name],phone:c.phone||map[c.name].phone,email:c.email||map[c.name].email,address:c.address||map[c.name].address,licenseNum:c.licenseNum||map[c.name].licenseNum};}
-      else{map[c.name]={name:c.name,phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum,bookingsCount:0};}
+      if(map[c.name]){map[c.name]={...map[c.name],phone:c.phone||map[c.name].phone,email:c.email||map[c.name].email,address:c.address||map[c.name].address,licenseNum:c.licenseNum||map[c.name].licenseNum,licenseDate:c.licenseDate||map[c.name].licenseDate,idNum:c.idNum||map[c.name].idNum};}
+      else{map[c.name]={name:c.name,phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum,licenseDate:c.licenseDate,idNum:c.idNum,bookingsCount:0};}
     });
     return Object.values(map).sort((a,b)=>a.name.localeCompare(b.name,"fr"));
   },[bookings,clients]);
@@ -1367,7 +1368,7 @@ export default function App(){
         {clientsList.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun client. Les clients apparaissent ici après une première réservation ou génération de contrat.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {clientsList.map(c=>(
-            <div key={c.name} onClick={()=>{setSelClient(c.name);setClientForm({phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum});}}
+            <div key={c.name} onClick={()=>{setSelClient(c.name);setClientForm({phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum,licenseDate:c.licenseDate||"",idNum:c.idNum||""});}}
               style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
               <div style={{width:40,height:40,borderRadius:"50%",background:"#3B82F625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#3B82F6",flexShrink:0}}>{c.name.charAt(0).toUpperCase()}</div>
               <div style={{flex:1,minWidth:0}}>
@@ -1399,6 +1400,10 @@ export default function App(){
               <Fld label="Email" value={clientForm.email} onChange={v=>setClientForm({...clientForm,email:v})} placeholder="client@email.fr"/>
               <Fld label="Adresse" value={clientForm.address} onChange={v=>setClientForm({...clientForm,address:v})} placeholder="12 rue de la Paix..."/>
               <Fld label="N° Permis" value={clientForm.licenseNum} onChange={v=>setClientForm({...clientForm,licenseNum:v})} placeholder="123456789012"/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                <div><label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:5}}>DATE OBTENTION PERMIS</label><input type="date" value={clientForm.licenseDate||""} onChange={e=>setClientForm({...clientForm,licenseDate:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"9px 11px",borderRadius:7,fontSize:13}}/></div>
+                <Fld label="N° Pièce d'identité" value={clientForm.idNum} onChange={v=>setClientForm({...clientForm,idNum:v})} placeholder="CNI / Passeport..."/>
+              </div>
               <div style={{background:BG,borderRadius:8,padding:"10px 12px",fontSize:11,color:"#64748B"}}>
                 📋 {(clientsList.find(c=>c.name===selClient)?.bookingsCount)||0} réservation(s) enregistrée(s)
               </div>
@@ -1514,10 +1519,44 @@ export default function App(){
                         </select>
                       </div>
                     )}
-                    <Fld label="Client" value={form.client} onChange={val=>setForm({...form,client:val})} placeholder="Nom du locataire"/>
+                    <div style={{position:"relative"}}>
+                      <label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:5}}>CLIENT</label>
+                      <input
+                        value={form.client||""}
+                        onChange={e=>{setForm({...form,client:e.target.value});setClientSuggest(true);}}
+                        onFocus={()=>setClientSuggest(true)}
+                        onBlur={()=>setTimeout(()=>setClientSuggest(false),150)}
+                        placeholder="Nom du locataire — créer ou rechercher"
+                        style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"9px 11px",borderRadius:7,fontSize:13,outline:"none"}}
+                      />
+                      {clientSuggest&&form.client&&(()=>{
+                        const matches=clientsList.filter(c=>c.name.toLowerCase().includes(form.client.toLowerCase())&&c.name.toLowerCase()!==form.client.toLowerCase());
+                        const exactMatch=clientsList.find(c=>c.name.toLowerCase()===form.client.toLowerCase());
+                        if(matches.length===0&&exactMatch)return null;
+                        return(
+                          <div style={{position:"absolute",top:"100%",left:0,right:0,marginTop:4,background:S1,border:"1px solid "+S3,borderRadius:9,boxShadow:"0 8px 24px rgba(0,0,0,.5)",zIndex:50,maxHeight:180,overflowY:"auto"}}>
+                            {matches.map(c=>(
+                              <div key={c.name} onMouseDown={()=>{setForm({...form,client:c.name,phone:c.phone||form.phone,email:c.email||form.email,address:c.address||form.address,licenseNum:c.licenseNum||form.licenseNum});setClientSuggest(false);}}
+                                style={{padding:"9px 11px",cursor:"pointer",borderBottom:"1px solid "+S2,display:"flex",alignItems:"center",gap:8}}>
+                                <span style={{width:24,height:24,borderRadius:"50%",background:"#3B82F625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#3B82F6",flexShrink:0}}>{c.name.charAt(0).toUpperCase()}</span>
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{fontSize:12,fontWeight:600,color:"#E2E8F0"}}>{c.name}</div>
+                                  {c.phone&&<div style={{fontSize:10,color:"#64748B"}}>{c.phone}</div>}
+                                </div>
+                              </div>
+                            ))}
+                            {!exactMatch&&<div onMouseDown={()=>setClientSuggest(false)} style={{padding:"8px 11px",fontSize:11,color:"#3B82F6",fontWeight:600,background:"#3B82F610"}}>＋ Créer "{form.client}" comme nouveau client</div>}
+                          </div>
+                        );
+                      })()}
+                    </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}><Fld label="Téléphone" value={form.phone} onChange={val=>setForm({...form,phone:val})} placeholder="06 00 00 00 00"/><Fld label="Email" value={form.email} onChange={val=>setForm({...form,email:val})} placeholder="client@email.fr"/></div>
                     <Fld label="Adresse" value={form.address} onChange={val=>setForm({...form,address:val})} placeholder="12 rue de la Paix..."/>
                     <Fld label="N° Permis" value={form.licenseNum} onChange={val=>setForm({...form,licenseNum:val})} placeholder="123456789012"/>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                      <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>DATE OBTENTION PERMIS</label><input type="date" value={form.licenseDate||""} onChange={e=>setForm({...form,licenseDate:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
+                      <Fld label="N° Pièce d'identité" value={form.idNum} onChange={val=>setForm({...form,idNum:val})} placeholder="CNI / Passeport..."/>
+                    </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>🏁 LIEU DE RÉCUPÉRATION</label><div style={{display:"flex",gap:5}}><button type="button" onClick={()=>setForm({...form,pickupLocation:"agence"})} style={{flex:1,background:(form.pickupLocation||"agence")==="agence"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>🏢 Agence</button><button type="button" onClick={()=>setForm({...form,pickupLocation:"aeroport"})} style={{flex:1,background:form.pickupLocation==="aeroport"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>✈️ Aéroport</button></div></div>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>🏁 LIEU DE DÉPOSE</label><div style={{display:"flex",gap:5}}><button type="button" onClick={()=>setForm({...form,dropLocation:"agence"})} style={{flex:1,background:(form.dropLocation||"agence")==="agence"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>🏢 Agence</button><button type="button" onClick={()=>setForm({...form,dropLocation:"aeroport"})} style={{flex:1,background:form.dropLocation==="aeroport"?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"none",color:"#fff",padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600}}>✈️ Aéroport</button></div></div>
