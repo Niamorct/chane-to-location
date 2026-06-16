@@ -18,7 +18,7 @@ const MFR=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","S
 const CO={name:"Chane-To Location",address:"712 rue de la gare, 97440 Saint-André, La Réunion",phone:"+262693010094",email:"chanetolocation@gmail.com",siret:"89512496400027",rcs:"895 124 964"};
 
 const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",mileage:r.mileage||"",fuel:r.fuel||"Essence"});
-const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence"});
+const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence",extraFees:r.extra_fees||0,extraFeesNote:r.extra_fees_note||""});
 const me=r=>({id:r.id,vehicleId:r.vehicle_id,date:r.date,amount:r.amount,category:r.category,note:r.note||""});
 const mc=r=>({id:r.id,name:r.name,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",notes:r.notes||"",createdAt:r.created_at});
 const mx=r=>({id:r.id,type:r.type,client:r.client,vehicleName:r.vehicle_name||"",vehiclePlate:r.vehicle_plate||"",dateStart:r.date_start||"",dateEnd:r.date_end||"",createdAt:r.created_at,bookingId:r.booking_id,html:r.html_content||""});
@@ -725,7 +725,7 @@ export default function App(){
     if(!form.client||!form.start||!form.end||!form.rate)return;
     if(pd(form.end)<pd(form.start))return;
     setSyncing(true);
-    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",license_date:form.licenseDate||null,id_num:form.idNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||""};
+    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",license_date:form.licenseDate||null,id_num:form.idNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||"",extra_fees:Number(form.extraFees)||0,extra_fees_note:form.extraFeesNote||""};
     try{
       if(modal.type==="add"||modal.type==="add-g"){const[r]=await dbIns("bookings",p);setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");}
       else{await dbUpd("bookings",form.id,p);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));showT("Réservation modifiée ✓");}
@@ -1323,7 +1323,7 @@ export default function App(){
                   {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
                     const v=vehicles.find(v=>v.id===b.vehicleId),isSel=cbid===b.id;
                     return(
-                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
+                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
                         <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
                         <div style={{fontSize:9,color:"#64748B",marginTop:1}}>{v?.name||"?"} · {fd(b.start)} → {fd(b.end)}</div>
                         <div style={{fontSize:11,fontWeight:700,color:"#F59E0B",marginTop:1}}>{b.rate*gdb(b.start,b.end)} €</div>
@@ -1545,7 +1545,7 @@ export default function App(){
                   </div>
                   <div style={{padding:"10px 22px 22px",display:"flex",gap:7,flexWrap:"wrap"}}>
                     <button onClick={()=>openEdit(b)} style={{flex:1,background:"#3B82F6",border:"none",color:"#fff",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>✏️ Modifier</button>
-                    <button onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});setModal(null);}} style={{flex:1,background:"#1a1a2e30",border:"1px solid #3B82F640",color:"#3B82F6",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>📄 Contrat</button>
+                    <button onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});setModal(null);}} style={{flex:1,background:"#1a1a2e30",border:"1px solid #3B82F640",color:"#3B82F6",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>📄 Contrat</button>
                     <button onClick={()=>setDc(b.id)} style={{flex:1,background:"#EF444420",border:"1px solid #EF444440",color:"#EF4444",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>🗑</button>
                   </div>
                   {dc===b.id&&<div style={{padding:"0 22px 18px"}}><div style={{background:"#EF444415",border:"1px solid #EF444430",borderRadius:8,padding:"11px"}}><div style={{fontSize:11,color:"#EF4444",marginBottom:9,fontWeight:600}}>Confirmer la suppression ?</div><div style={{display:"flex",gap:6}}><button onClick={()=>delBk(b.id)} style={{flex:1,background:"#EF4444",border:"none",color:"#fff",padding:"7px",borderRadius:6,cursor:"pointer",fontWeight:600,fontSize:11}}>Oui</button><button onClick={()=>setDc(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"7px",borderRadius:6,cursor:"pointer",fontSize:11}}>Non</button></div></div></div>}
@@ -1622,7 +1622,11 @@ export default function App(){
                       <Fld label="Nombre de jours" value={form.days??(form.start&&form.end&&pd(form.end)>=pd(form.start)?gdb(form.start,form.end):"")} onChange={val=>setForm({...form,days:val})} placeholder="1" type="number"/>
                     </div>
                     <Fld label="Caution (€)" value={form.deposit} onChange={val=>setForm({...form,deposit:val})} placeholder="300" type="number"/>
-                    {form.start&&form.end&&pd(form.end)>=pd(form.start)&&<div style={{background:"#10B98115",border:"1px solid #10B98130",borderRadius:7,padding:"7px 10px",fontSize:11}}><span style={{color:"#10B981",fontWeight:700}}>{form.days??gdb(form.start,form.end)} jour(s) facturé(s)</span>{form.rate&&<span style={{color:"#64748B"}}> · Total : <strong style={{color:"#F59E0B"}}>{Number(form.rate)*Number(form.days??gdb(form.start,form.end))} €</strong></span>}</div>}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                      <Fld label="Frais — Libellé" value={form.extraFeesNote} onChange={val=>setForm({...form,extraFeesNote:val})} placeholder="Ex: Dépôt aéroport..."/>
+                      <Fld label="Frais — Montant (€)" value={form.extraFees} onChange={val=>setForm({...form,extraFees:val})} placeholder="0" type="number"/>
+                    </div>
+                    {form.start&&form.end&&pd(form.end)>=pd(form.start)&&<div style={{background:"#10B98115",border:"1px solid #10B98130",borderRadius:7,padding:"7px 10px",fontSize:11}}><span style={{color:"#10B981",fontWeight:700}}>{form.days??gdb(form.start,form.end)} jour(s) facturé(s)</span>{form.rate&&<span style={{color:"#64748B"}}> · Total : <strong style={{color:"#F59E0B"}}>{(Number(form.rate)*Number(form.days??gdb(form.start,form.end)))+(Number(form.extraFees)||0)} €</strong></span>}</div>}
                     <Fld label="Notes" value={form.notes} onChange={val=>setForm({...form,notes:val})} placeholder="Informations…" textarea/>
                   </div>
                   <div style={{padding:"0 22px 22px",display:"flex",gap:7}}>
