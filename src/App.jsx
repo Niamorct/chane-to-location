@@ -20,6 +20,8 @@ const CO={name:"Chane-To Location",address:"712 rue de la gare, 97440 Saint-Andr
 const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",mileage:r.mileage||"",fuel:r.fuel||"Essence"});
 const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence"});
 const me=r=>({id:r.id,vehicleId:r.vehicle_id,date:r.date,amount:r.amount,category:r.category,note:r.note||""});
+const mc=r=>({id:r.id,name:r.name,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",notes:r.notes||"",createdAt:r.created_at});
+const mx=r=>({id:r.id,type:r.type,client:r.client,vehicleName:r.vehicle_name||"",vehiclePlate:r.vehicle_plate||"",dateStart:r.date_start||"",dateEnd:r.date_end||"",createdAt:r.created_at,bookingId:r.booking_id});
 
 const pd=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
 const fd=s=>pd(s).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});
@@ -440,7 +442,7 @@ function EdlSection({title,icon,data,onChange,mob,BG,S1,S2}){
   );
 }
 
-function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
+function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport}){
   const isPWA=()=>window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
   const openPDFBlob=(html,filename)=>{
     if(isPWA()){
@@ -539,12 +541,14 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
     openPDFBlob(html,"EDL_Recuperation_"+selBooking.client.replace(/ /g,"_")+".html");
+    if(logExport)logExport("edl_in",selBooking,selVehicle);
   }
 
   function printOut(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
     openPDFBlob(html,"EDL_Depose_"+selBooking.client.replace(/ /g,"_")+".html");
+    if(logExport)logExport("edl_out",selBooking,selVehicle);
   }
 
   return(
@@ -654,6 +658,8 @@ export default function App(){
   const HEADER_H=mob?`calc(${HH}px + env(safe-area-inset-top, 0px))`:HH+"px";
 
   const[vehicles,setVehicles]=useState([]);
+  const[clients,setClients]=useState([]);
+  const[exportsLog,setExportsLog]=useState([]);
   const[bookings,setBookings]=useState([]);
   const[expenses,setExpenses]=useState([]);
   const[loading,setLoading]=useState(true);
@@ -667,6 +673,8 @@ export default function App(){
   const[toast,setToast]=useState(null);
   const[ptr,setPtr]=useState(false); // pull-to-refresh
   const[logoMenu,setLogoMenu]=useState(false);
+  const[selClient,setSelClient]=useState(null);
+  const[clientForm,setClientForm]=useState({phone:"",email:"",address:"",licenseNum:""});
   const[ptrY,setPtrY]=useState(0);
   const PTR_THRESHOLD=70;
   const onTouchStart=e=>{if(window.scrollY===0)setPtrY(e.touches[0].clientY);};
@@ -692,6 +700,8 @@ export default function App(){
       setVehicles((vR||[]).map(mv));
       setBookings((bR||[]).map(mb));
       setExpenses((eR||[]).map(me));
+      try{const cR=await dbGet("clients");setClients((cR||[]).map(mc));}catch(e){setClients([]);}
+      try{const xR=await dbGet("document_exports");setExportsLog((xR||[]).map(mx));}catch(e){setExportsLog([]);}
     }catch(e){showT("Erreur de connexion","error");}
     setLoading(false);
   },[]);
@@ -714,6 +724,7 @@ export default function App(){
     try{
       if(modal.type==="add"||modal.type==="add-g"){const[r]=await dbIns("bookings",p);setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");}
       else{await dbUpd("bookings",form.id,p);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));showT("Réservation modifiée ✓");}
+      upsertClient(form.client,{phone:form.phone,email:form.email,address:form.address,licenseNum:form.licenseNum});
     }catch(e){showT("Erreur : "+String(e?.message||e),"error");}
     setSyncing(false);setModal(null);
   };
@@ -772,7 +783,29 @@ export default function App(){
       if(!w)return;w.document.write(html);w.document.close();setTimeout(()=>w.print(),600);
     }
   };
-  const exportPDF=(b,v)=>{const bm={...b,...cex};const html=cHTML(bm,v,cco);const cn="Contrat_CTR-"+new Date().getFullYear()+"-"+String(b.id).padStart(4,"0")+"_"+b.client.replace(/\s+/g,"_")+".html";openPDF(html,cn);};
+  const upsertClient=async(name,info)=>{
+    try{
+      const existing=clients.find(c=>c.name.toLowerCase()===name.toLowerCase());
+      const payload={name,phone:info.phone||"",email:info.email||"",address:info.address||"",license_num:info.licenseNum||""};
+      if(existing){await dbUpd("clients",existing.id,payload);setClients(prev=>prev.map(c=>c.id===existing.id?{...c,...mc({...payload,id:existing.id})}:c));}
+      else{const[r]=await dbIns("clients",payload);if(r)setClients(prev=>[...prev,mc(r)]);}
+    }catch(e){/* table clients absente ou erreur silencieuse */}
+  };
+  const logExport=async(type,b,v)=>{
+    try{
+      const payload={type,client:b.client,vehicle_name:v?.name||"",vehicle_plate:v?.plate||"",date_start:b.start,date_end:b.end,booking_id:b.id};
+      const[r]=await dbIns("document_exports",payload);
+      if(r)setExportsLog(prev=>[mx(r),...prev]);
+    }catch(e){/* table document_exports absente ou erreur silencieuse */}
+  };
+  const exportPDF=(b,v)=>{
+    const bm={...b,...cex};
+    const html=cHTML(bm,v,cco);
+    const cn="Contrat_CTR-"+new Date().getFullYear()+"-"+String(b.id).padStart(4,"0")+"_"+b.client.replace(/\s+/g,"_")+".html";
+    openPDF(html,cn);
+    upsertClient(b.client,{phone:bm.phone,email:bm.email,address:bm.address,licenseNum:bm.licenseNum});
+    logExport("contract",b,v);
+  };
 
 
   const aip=useMemo(()=>{if(!spf||!ps||!pe)return vehicles;return vehicles.filter(v=>avail(v.id,ps,pe,bookings,undefined));},[vehicles,bookings,spf,ps,pe]);
@@ -783,8 +816,13 @@ export default function App(){
     [...bookings].sort((a,b)=>pd(a.start)-pd(b.start)).forEach(b=>{
       map[b.client]={name:b.client,phone:b.phone||"",email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",bookingsCount:(map[b.client]?.bookingsCount||0)+1,lastBooking:b.start};
     });
+    // Les infos enregistrées manuellement dans la fiche client (table clients) priment sur celles dérivées des réservations
+    clients.forEach(c=>{
+      if(map[c.name]){map[c.name]={...map[c.name],phone:c.phone||map[c.name].phone,email:c.email||map[c.name].email,address:c.address||map[c.name].address,licenseNum:c.licenseNum||map[c.name].licenseNum};}
+      else{map[c.name]={name:c.name,phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum,bookingsCount:0};}
+    });
     return Object.values(map).sort((a,b)=>a.name.localeCompare(b.name,"fr"));
-  },[bookings]);
+  },[bookings,clients]);
   const dv=spf?aip:vehicles;
 
   const td=useMemo(()=>{
@@ -1317,7 +1355,7 @@ export default function App(){
 
       {/* ── ÉTAT DES LIEUX ── */}
       {page==="edl"&&<div style={pg}>
-        <EdlPage vehicles={vehicles} bookings={bookings} mob={mob} BG={BG} S1={S1} S2={S2} S3={S3} card={card} btnP={btnP} fd={fd} fds={fds}/>
+        <EdlPage vehicles={vehicles} bookings={bookings} mob={mob} BG={BG} S1={S1} S2={S2} S3={S3} card={card} btnP={btnP} fd={fd} fds={fds} logExport={logExport}/>
       </div>}
 
       {/* ── BASE CLIENTS ── */}
@@ -1326,10 +1364,11 @@ export default function App(){
           <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>👥 Clients</div>
           <div style={{fontSize:11,color:"#475569"}}>{clientsList.length} client{clientsList.length>1?"s":""} · ordre alphabétique</div>
         </div>
-        {clientsList.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun client. Les clients apparaissent ici après une première réservation.</div>:
+        {clientsList.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun client. Les clients apparaissent ici après une première réservation ou génération de contrat.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {clientsList.map(c=>(
-            <div key={c.name} style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12}}>
+            <div key={c.name} onClick={()=>{setSelClient(c.name);setClientForm({phone:c.phone,email:c.email,address:c.address,licenseNum:c.licenseNum});}}
+              style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
               <div style={{width:40,height:40,borderRadius:"50%",background:"#3B82F625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#3B82F6",flexShrink:0}}>{c.name.charAt(0).toUpperCase()}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{c.name}</div>
@@ -1337,8 +1376,6 @@ export default function App(){
                   {c.phone&&<span>📞 {c.phone}</span>}
                   {c.email&&<span>📧 {c.email}</span>}
                 </div>
-                {c.address&&<div style={{fontSize:10,color:"#475569",marginTop:2}}>📍 {c.address}</div>}
-                {c.licenseNum&&<div style={{fontSize:10,color:"#475569",marginTop:1}}>🪪 Permis : {c.licenseNum}</div>}
               </div>
               <div style={{flexShrink:0,textAlign:"right"}}>
                 <div style={{background:"#3B82F620",color:"#3B82F6",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{c.bookingsCount} résa{c.bookingsCount>1?"s":""}</div>
@@ -1346,63 +1383,82 @@ export default function App(){
             </div>
           ))}
         </div>}
+
+        {/* FICHE CLIENT (panneau détail) */}
+        {selClient&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",alignItems:mob?"flex-end":"center",justifyContent:"center",zIndex:250,padding:mob?0:16}} onClick={e=>e.target===e.currentTarget&&setSelClient(null)}>
+          <div style={{background:S1,borderRadius:mob?"18px 18px 0 0":"18px",width:"100%",maxWidth:mob?"100%":460,border:"1px solid "+S2,maxHeight:mob?"90vh":"85vh",overflowY:"auto"}}>
+            <div style={{padding:"18px 22px",borderBottom:"1px solid "+S2,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:10,color:"#475569",fontWeight:600}}>FICHE CLIENT</div>
+                <div style={{fontSize:17,fontWeight:700,color:"#F1F5F9",marginTop:2}}>{selClient}</div>
+              </div>
+              <button onClick={()=>setSelClient(null)} style={{background:S2,border:"none",color:"#64748B",width:28,height:28,borderRadius:6,cursor:"pointer",fontSize:15}}>×</button>
+            </div>
+            <div style={{padding:"16px 22px",display:"flex",flexDirection:"column",gap:12}}>
+              <Fld label="Téléphone" value={clientForm.phone} onChange={v=>setClientForm({...clientForm,phone:v})} placeholder="06 00 00 00 00"/>
+              <Fld label="Email" value={clientForm.email} onChange={v=>setClientForm({...clientForm,email:v})} placeholder="client@email.fr"/>
+              <Fld label="Adresse" value={clientForm.address} onChange={v=>setClientForm({...clientForm,address:v})} placeholder="12 rue de la Paix..."/>
+              <Fld label="N° Permis" value={clientForm.licenseNum} onChange={v=>setClientForm({...clientForm,licenseNum:v})} placeholder="123456789012"/>
+              <div style={{background:BG,borderRadius:8,padding:"10px 12px",fontSize:11,color:"#64748B"}}>
+                📋 {(clientsList.find(c=>c.name===selClient)?.bookingsCount)||0} réservation(s) enregistrée(s)
+              </div>
+            </div>
+            <div style={{padding:"0 22px 22px",display:"flex",gap:7}}>
+              <button onClick={()=>setSelClient(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>Fermer</button>
+              <button onClick={async()=>{await upsertClient(selClient,clientForm);showT("Client enregistré ✓");setSelClient(null);}} style={{flex:2,background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:12}}>💾 Enregistrer</button>
+            </div>
+          </div>
+        </div>}
       </div>}
 
-      {/* ── BASE CONTRATS ── */}
+      {/* ── BASE CONTRATS (uniquement PDF exportés) ── */}
       {page==="contractsDB"&&<div style={pg}>
         <div style={{marginBottom:18}}>
-          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>📄 Base des contrats</div>
-          <div style={{fontSize:11,color:"#475569"}}>{bookings.length} contrat{bookings.length>1?"s":""} · ordre décroissant</div>
+          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>📄 Contrats exportés</div>
+          <div style={{fontSize:11,color:"#475569"}}>{exportsLog.filter(x=>x.type==="contract").length} export{exportsLog.filter(x=>x.type==="contract").length>1?"s":""} · ordre décroissant</div>
         </div>
-        {bookings.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun contrat. Créez une réservation puis générez son contrat dans l'onglet "Contrats".</div>:
+        {exportsLog.filter(x=>x.type==="contract").length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun contrat exporté. Générez un PDF depuis l'onglet "Contrats" pour qu'il apparaisse ici.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
-            const v=vehicles.find(v=>v.id===b.vehicleId);
-            const cn="CTR-"+new Date(b.start).getFullYear()+"-"+String(b.id).padStart(4,"0");
+          {[...exportsLog].filter(x=>x.type==="contract").sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map(x=>{
+            const cn="CTR-"+new Date(x.dateStart).getFullYear()+"-"+String(x.bookingId).padStart(4,"0");
             return(
-              <div key={b.id} onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",sigLoueur:null,sigLocataire:null});}}
+              <div key={x.id} onClick={()=>{const b=bookings.find(bb=>bb.id===x.bookingId);if(b){setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",sigLoueur:null,sigLocataire:null});}else{setPage("contracts");}}}
                 style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:40,height:40,borderRadius:10,background:"#8B5CF625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>📄</div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{cn} — {b.client}</div>
-                  <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{v?.name||"?"} ({v?.plate||"?"}) · {fd(b.start)} → {fd(b.end)}</div>
+                  <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{cn} — {x.client}</div>
+                  <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{x.vehicleName||"?"} ({x.vehiclePlate||"?"}) · {x.dateStart?fd(x.dateStart):"?"} → {x.dateEnd?fd(x.dateEnd):"?"}</div>
                 </div>
-                <div style={{flexShrink:0,fontSize:13,fontWeight:700,color:"#F59E0B"}}>{(b.rate*gdb(b.start,b.end)).toLocaleString("fr-FR")} €</div>
+                <div style={{flexShrink:0,fontSize:10,color:"#475569"}}>{x.createdAt?new Date(x.createdAt).toLocaleDateString("fr-FR"):""}</div>
               </div>
             );
           })}
         </div>}
       </div>}
 
-      {/* ── BASE ÉTATS DES LIEUX ── */}
+      {/* ── BASE ÉTATS DES LIEUX (uniquement PDF exportés) ── */}
       {page==="edlDB"&&<div style={pg}>
         <div style={{marginBottom:18}}>
-          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>🔍 Base des états des lieux</div>
-          <div style={{fontSize:11,color:"#475569"}}>{bookings.length} réservation{bookings.length>1?"s":""} · ordre décroissant</div>
+          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>🔍 États des lieux exportés</div>
+          <div style={{fontSize:11,color:"#475569"}}>{exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length} export{exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length>1?"s":""} · ordre décroissant</div>
         </div>
-        {bookings.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun état des lieux. Sélectionnez une réservation dans l'onglet "État des lieux".</div>:
+        {exportsLog.filter(x=>x.type==="edl_in"||x.type==="edl_out").length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun état des lieux exporté. Générez un PDF depuis l'onglet "État des lieux" pour qu'il apparaisse ici.</div>:
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
-            const v=vehicles.find(v=>v.id===b.vehicleId);
-            return(
-              <div key={b.id} onClick={()=>setPage("edl")}
-                style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
-                <div style={{width:40,height:40,borderRadius:10,background:"#10B98125",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🔍</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{b.client}</div>
-                  <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{v?.name||"?"} ({v?.plate||"?"}) · {fd(b.start)} → {fd(b.end)}</div>
-                </div>
-                <div style={{flexShrink:0,display:"flex",gap:5}}>
-                  <span style={{background:"#10B98120",color:"#10B981",padding:"3px 8px",borderRadius:20,fontSize:10,fontWeight:600}}>Récupération</span>
-                  <span style={{background:"#EF444420",color:"#EF4444",padding:"3px 8px",borderRadius:20,fontSize:10,fontWeight:600}}>Dépose</span>
-                </div>
+          {[...exportsLog].filter(x=>x.type==="edl_in"||x.type==="edl_out").sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).map(x=>(
+            <div key={x.id} onClick={()=>setPage("edl")}
+              style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:10,background:(x.type==="edl_in"?"#10B981":"#EF4444")+"25",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🔍</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{x.client}</div>
+                <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{x.vehicleName||"?"} ({x.vehiclePlate||"?"}) · {x.dateStart?fd(x.dateStart):"?"} → {x.dateEnd?fd(x.dateEnd):"?"}</div>
               </div>
-            );
-          })}
+              <span style={{background:(x.type==="edl_in"?"#10B981":"#EF4444")+"20",color:x.type==="edl_in"?"#10B981":"#EF4444",padding:"3px 8px",borderRadius:20,fontSize:10,fontWeight:600,flexShrink:0}}>{x.type==="edl_in"?"Récupération":"Dépose"}</span>
+            </div>
+          ))}
         </div>}
       </div>}
 
-      {/* ── MODALS ── */}
+      {/* ── MODALS ── */}      {/* ── MODALS ── */}
       {modal&&!dc?.type?.startsWith("v")&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",alignItems:mob?"flex-end":"center",justifyContent:"center",zIndex:250,padding:mob?0:16}} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
           <div style={{background:S1,borderRadius:mob?"18px 18px 0 0":"18px",width:"100%",maxWidth:mob?"100%":490,border:"1px solid "+S2,boxShadow:"0 20px 60px rgba(0,0,0,.7)",maxHeight:mob?"92vh":"88vh",overflowY:"auto"}}>
