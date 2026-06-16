@@ -666,6 +666,7 @@ export default function App(){
   const[dc,setDc]=useState(null);
   const[toast,setToast]=useState(null);
   const[ptr,setPtr]=useState(false); // pull-to-refresh
+  const[logoMenu,setLogoMenu]=useState(false);
   const[ptrY,setPtrY]=useState(0);
   const PTR_THRESHOLD=70;
   const onTouchStart=e=>{if(window.scrollY===0)setPtrY(e.touches[0].clientY);};
@@ -775,6 +776,15 @@ export default function App(){
 
 
   const aip=useMemo(()=>{if(!spf||!ps||!pe)return vehicles;return vehicles.filter(v=>avail(v.id,ps,pe,bookings,undefined));},[vehicles,bookings,spf,ps,pe]);
+
+  // Liste des clients dérivée des réservations (déduplication par nom, infos les plus récentes, ordre alphabétique)
+  const clientsList=useMemo(()=>{
+    const map={};
+    [...bookings].sort((a,b)=>pd(a.start)-pd(b.start)).forEach(b=>{
+      map[b.client]={name:b.client,phone:b.phone||"",email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",bookingsCount:(map[b.client]?.bookingsCount||0)+1,lastBooking:b.start};
+    });
+    return Object.values(map).sort((a,b)=>a.name.localeCompare(b.name,"fr"));
+  },[bookings]);
   const dv=spf?aip:vehicles;
 
   const td=useMemo(()=>{
@@ -805,7 +815,7 @@ export default function App(){
   const card={background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?13:18};
   const btnP={background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:mob?"7px 12px":"9px 18px",borderRadius:9,cursor:"pointer",fontWeight:700,fontSize:mob?12:13};
   const btnS={background:S2,border:"none",color:"#94A3B8",padding:"7px 14px",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:600};
-  const pg={padding:mob?"12px 14px 88px":"20px 32px 40px",maxWidth:mob?undefined:1240,margin:mob?undefined:"0 auto",paddingTop:HH+16};
+  const pg={padding:mob?"12px 14px 88px":"20px 32px 40px",maxWidth:mob?undefined:1240,margin:mob?undefined:"0 auto",paddingTop:mob?16:20};
 
   const TABS=[{id:"calendar",icon:"📅",label:"Calendrier"},{id:"fleet",icon:"🚗",label:"Flotte"},{id:"treasury",icon:"💰",label:"Trésorerie"},{id:"contracts",icon:"📄",label:"Contrats"},{id:"edl",icon:"🔍",label:"État des lieux"}];
 
@@ -838,9 +848,28 @@ export default function App(){
       {/* HEADER FIXE */}
       <header style={{background:S1,borderBottom:"1px solid "+S2,padding:mob?"0 12px":"0 32px",position:"fixed",top:0,left:0,right:0,zIndex:200,paddingTop:mob?"env(safe-area-inset-top,0px)":0,height:mob?"calc("+HH+"px + env(safe-area-inset-top, 0px))":HH}}>
         <div style={{maxWidth:1240,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:HH,gap:8}}>
-          <div style={{display:"flex",alignItems:"center",gap:mob?8:10,flexShrink:0}}>
-            <img src={LOGO} alt="" style={{width:mob?34:42,height:mob?34:42,objectFit:"contain",filter:"brightness(10)"}}/>
-            {!mob&&<div><div style={{fontWeight:800,fontSize:15,color:"#F1F5F9"}}>Chane-To Location</div><div style={{fontSize:10,color:"#64748B"}}>Gestion de flotte · 0693 01 00 94</div></div>}
+          <div style={{position:"relative"}}>
+            <div onClick={()=>setLogoMenu(p=>!p)} style={{display:"flex",alignItems:"center",gap:mob?8:10,flexShrink:0,cursor:"pointer"}}>
+              <img src={LOGO} alt="" style={{width:mob?34:42,height:mob?34:42,objectFit:"contain",filter:"brightness(10)"}}/>
+              {!mob&&<div><div style={{fontWeight:800,fontSize:15,color:"#F1F5F9"}}>Chane-To Location</div><div style={{fontSize:10,color:"#64748B"}}>Gestion de flotte · 0693 01 00 94</div></div>}
+              <span style={{fontSize:10,color:"#64748B",marginLeft:2,transform:logoMenu?"rotate(180deg)":"none",transition:"transform .2s"}}>▾</span>
+            </div>
+            {logoMenu&&<>
+              <div onClick={()=>setLogoMenu(false)} style={{position:"fixed",inset:0,zIndex:299}}/>
+              <div style={{position:"absolute",top:"calc(100% + 8px)",left:0,background:S1,border:"1px solid "+S2,borderRadius:12,boxShadow:"0 8px 30px rgba(0,0,0,.5)",zIndex:300,minWidth:200,overflow:"hidden"}}>
+                {[
+                  {id:"clients",icon:"👥",label:"Clients",count:clientsList.length},
+                  {id:"contractsDB",icon:"📄",label:"Contrats",count:bookings.length},
+                  {id:"edlDB",icon:"🔍",label:"États des lieux",count:bookings.length},
+                ].map(item=>(
+                  <button key={item.id} onClick={()=>{setPage(item.id);setLogoMenu(false);}} style={{width:"100%",background:page===item.id?S2:"transparent",border:"none",borderBottom:"1px solid "+S2,color:"#E2E8F0",padding:"11px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:600,textAlign:"left"}}>
+                    <span style={{fontSize:16}}>{item.icon}</span>
+                    <span style={{flex:1}}>{item.label}</span>
+                    <span style={{fontSize:10,color:"#475569",background:BG,padding:"2px 7px",borderRadius:10}}>{item.count}</span>
+                  </button>
+                ))}
+              </div>
+            </>}
           </div>
           {!mob&&<nav style={{display:"flex",gap:3,background:S2,borderRadius:10,padding:3}}>
             {TABS.map(t=><button key={t.id} onClick={()=>setPage(t.id)} style={{background:page===t.id?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"transparent",border:"none",color:page===t.id?"#fff":"#64748B",padding:"6px 14px",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:600}}>{t.icon} {t.label}</button>)}
@@ -851,6 +880,9 @@ export default function App(){
           </div>
         </div>
       </header>
+
+      {/* SPACER — pousse le contenu sous le header fixe */}
+      <div style={{height:mob?"calc("+HH+"px + env(safe-area-inset-top, 0px))":HH}}/>
 
       {/* NAV BAS MOBILE */}
       {mob&&<nav style={{position:"fixed",bottom:0,left:0,right:0,background:S1,borderTop:"1px solid "+S2,display:"flex",zIndex:200,paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
@@ -1286,6 +1318,88 @@ export default function App(){
       {/* ── ÉTAT DES LIEUX ── */}
       {page==="edl"&&<div style={pg}>
         <EdlPage vehicles={vehicles} bookings={bookings} mob={mob} BG={BG} S1={S1} S2={S2} S3={S3} card={card} btnP={btnP} fd={fd} fds={fds}/>
+      </div>}
+
+      {/* ── BASE CLIENTS ── */}
+      {page==="clients"&&<div style={pg}>
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>👥 Clients</div>
+          <div style={{fontSize:11,color:"#475569"}}>{clientsList.length} client{clientsList.length>1?"s":""} · ordre alphabétique</div>
+        </div>
+        {clientsList.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun client. Les clients apparaissent ici après une première réservation.</div>:
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {clientsList.map(c=>(
+            <div key={c.name} style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:"50%",background:"#3B82F625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#3B82F6",flexShrink:0}}>{c.name.charAt(0).toUpperCase()}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{c.name}</div>
+                <div style={{fontSize:11,color:"#64748B",marginTop:2,display:"flex",gap:10,flexWrap:"wrap"}}>
+                  {c.phone&&<span>📞 {c.phone}</span>}
+                  {c.email&&<span>📧 {c.email}</span>}
+                </div>
+                {c.address&&<div style={{fontSize:10,color:"#475569",marginTop:2}}>📍 {c.address}</div>}
+                {c.licenseNum&&<div style={{fontSize:10,color:"#475569",marginTop:1}}>🪪 Permis : {c.licenseNum}</div>}
+              </div>
+              <div style={{flexShrink:0,textAlign:"right"}}>
+                <div style={{background:"#3B82F620",color:"#3B82F6",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>{c.bookingsCount} résa{c.bookingsCount>1?"s":""}</div>
+              </div>
+            </div>
+          ))}
+        </div>}
+      </div>}
+
+      {/* ── BASE CONTRATS ── */}
+      {page==="contractsDB"&&<div style={pg}>
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>📄 Base des contrats</div>
+          <div style={{fontSize:11,color:"#475569"}}>{bookings.length} contrat{bookings.length>1?"s":""} · ordre décroissant</div>
+        </div>
+        {bookings.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun contrat. Créez une réservation puis générez son contrat dans l'onglet "Contrats".</div>:
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
+            const v=vehicles.find(v=>v.id===b.vehicleId);
+            const cn="CTR-"+new Date(b.start).getFullYear()+"-"+String(b.id).padStart(4,"0");
+            return(
+              <div key={b.id} onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",sigLoueur:null,sigLocataire:null});}}
+                style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:40,height:40,borderRadius:10,background:"#8B5CF625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>📄</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{cn} — {b.client}</div>
+                  <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{v?.name||"?"} ({v?.plate||"?"}) · {fd(b.start)} → {fd(b.end)}</div>
+                </div>
+                <div style={{flexShrink:0,fontSize:13,fontWeight:700,color:"#F59E0B"}}>{(b.rate*gdb(b.start,b.end)).toLocaleString("fr-FR")} €</div>
+              </div>
+            );
+          })}
+        </div>}
+      </div>}
+
+      {/* ── BASE ÉTATS DES LIEUX ── */}
+      {page==="edlDB"&&<div style={pg}>
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:mob?17:20,fontWeight:700,color:"#F1F5F9"}}>🔍 Base des états des lieux</div>
+          <div style={{fontSize:11,color:"#475569"}}>{bookings.length} réservation{bookings.length>1?"s":""} · ordre décroissant</div>
+        </div>
+        {bookings.length===0?<div style={{...card,textAlign:"center",padding:"36px",color:"#475569"}}>Aucun état des lieux. Sélectionnez une réservation dans l'onglet "État des lieux".</div>:
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
+            const v=vehicles.find(v=>v.id===b.vehicleId);
+            return(
+              <div key={b.id} onClick={()=>setPage("edl")}
+                style={{background:S1,border:"1px solid "+S2,borderRadius:12,padding:mob?13:16,cursor:"pointer",display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:40,height:40,borderRadius:10,background:"#10B98125",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>🔍</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:13,color:"#F1F5F9"}}>{b.client}</div>
+                  <div style={{fontSize:11,color:"#64748B",marginTop:2}}>{v?.name||"?"} ({v?.plate||"?"}) · {fd(b.start)} → {fd(b.end)}</div>
+                </div>
+                <div style={{flexShrink:0,display:"flex",gap:5}}>
+                  <span style={{background:"#10B98120",color:"#10B981",padding:"3px 8px",borderRadius:20,fontSize:10,fontWeight:600}}>Récupération</span>
+                  <span style={{background:"#EF444420",color:"#EF4444",padding:"3px 8px",borderRadius:20,fontSize:10,fontWeight:600}}>Dépose</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>}
       </div>}
 
       {/* ── MODALS ── */}
