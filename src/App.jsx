@@ -31,7 +31,7 @@ const ad=(ds,n)=>{const d=pd(ds);d.setDate(d.getDate()+n);const y=d.getFullYear(
 const dir=(date,s,e)=>{const d=pd(date),a=pd(s),b=pd(e);return d>=a&&d<=b;};
 const gdb=(s,e)=>Math.round((pd(e).getTime()-pd(s).getTime())/(864e5))+1;
 const gym=ds=>{const d=pd(ds);return{y:d.getFullYear(),m:d.getMonth()};};
-const br=b=>b.rate*gdb(b.start,b.end);
+const br=b=>b.rate*(b.days||gdb(b.start,b.end));
 const avail=(vid,s,e,bks,ex)=>!bks.some(b=>b.vehicleId===vid&&b.id!==ex&&!(pd(b.end)<pd(s)||pd(b.start)>pd(e)));
 
 function n2w(n){
@@ -725,24 +725,21 @@ export default function App(){
     if(pd(form.end)<pd(form.start))return;
     setSyncing(true);
     const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",license_date:form.licenseDate||null,id_num:form.idNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||"",extra_fees:Number(form.extraFees)||0,extra_fees_note:form.extraFeesNote||"",days:form.days?Number(form.days):null};
-    console.log("[saveBk] form.days=",form.days,"payload.days=",p.days,"form.id=",form.id,"modal.type=",modal.type);
     try{
       if(modal.type==="add"||modal.type==="add-g"){
         const res=await dbIns("bookings",p);
         if(!Array.isArray(res))throw new Error(res?.message||"Réponse invalide du serveur");
         const r=res[0];
-        console.log("[saveBk] insert response:",r);
         setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");
       }
       else{
         const res=await dbUpd("bookings",form.id,p);
-        console.log("[saveBk] update response:",res);
         if(Array.isArray(res)&&res[0]){setBookings(prev=>prev.map(b=>b.id===form.id?mb(res[0]):b));}
-        else{console.warn("[saveBk] update did NOT return an array, server response:",res);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));}
+        else{setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));}
         showT("Réservation modifiée ✓");
       }
       upsertClient(form.client,{phone:form.phone,email:form.email,address:form.address,licenseNum:form.licenseNum,licenseDate:form.licenseDate,idNum:form.idNum});
-    }catch(e){console.error("[saveBk] error:",e);showT("Erreur : "+String(e?.message||e),"error");}
+    }catch(e){showT("Erreur : "+String(e?.message||e),"error");}
     setSyncing(false);setModal(null);
   };
   const delBk=async id=>{setSyncing(true);await dbDel("bookings",id);setBookings(prev=>prev.filter(b=>b.id!==id));setModal(null);setDc(null);showT("Supprimée","info");setSyncing(false);};
@@ -1122,7 +1119,7 @@ export default function App(){
                       <div style={{fontSize:10,color:"#64748B",marginBottom:5}}>📅 {fds(bk.start)} → {fds(bk.end)}</div>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                         <span style={{color:"#F59E0B",fontWeight:700,fontSize:13}}>{bk.rate} €/j</span>
-                        <span style={{fontSize:9,color:"#475569",background:S2,padding:"2px 6px",borderRadius:10}}>{gdb(bk.start,bk.end)}j · {bk.rate*gdb(bk.start,bk.end)} €</span>
+                        <span style={{fontSize:9,color:"#475569",background:S2,padding:"2px 6px",borderRadius:10}}>{bk.days||gdb(bk.start,bk.end)}j · {bk.rate*(bk.days||gdb(bk.start,bk.end))} €</span>
                       </div>
                     </div>
                   ):(
@@ -1347,10 +1344,10 @@ export default function App(){
                   {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
                     const v=vehicles.find(v=>v.id===b.vehicleId),isSel=cbid===b.id;
                     return(
-                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
+                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence",rate:b.rate,days:b.days||null});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
                         <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
                         <div style={{fontSize:9,color:"#64748B",marginTop:1}}>{v?.name||"?"} · {fd(b.start)} → {fd(b.end)}</div>
-                        <div style={{fontSize:11,fontWeight:700,color:"#F59E0B",marginTop:1}}>{b.rate*gdb(b.start,b.end)} €</div>
+                        <div style={{fontSize:11,fontWeight:700,color:"#F59E0B",marginTop:1}}>{b.rate*(b.days||gdb(b.start,b.end))} €</div>
                         {isSel&&<div style={{fontSize:9,color:"#3B82F6",fontWeight:600,marginTop:3}}>✓ Sélectionné</div>}
                       </div>
                     );
@@ -1558,16 +1555,16 @@ export default function App(){
                     <Row icon="📞" label="Téléphone" value={b.phone||"—"}/>
                     <Row icon="📧" label="Email" value={b.email||"—"}/>
                     <Row icon="📅" label="Période" value={fd(b.start)+" → "+fd(b.end)}/>
-                    <Row icon="⏱" label="Durée" value={gdb(b.start,b.end)+" jour(s)"}/>
+                    <Row icon="⏱" label="Durée facturée" value={(b.days||gdb(b.start,b.end))+" jour(s)"}/>
                     <div style={{background:BG,borderRadius:9,padding:"12px",display:"flex",justifyContent:"space-between"}}>
                       <div><div style={{fontSize:10,color:"#475569"}}>Tarif/jour</div><div style={{fontSize:20,fontWeight:700,color:"#F59E0B"}}>{b.rate} €</div></div>
-                      <div style={{textAlign:"right"}}><div style={{fontSize:10,color:"#475569"}}>Total</div><div style={{fontSize:20,fontWeight:700,color:"#10B981"}}>{b.rate*gdb(b.start,b.end)} €</div></div>
+                      <div style={{textAlign:"right"}}><div style={{fontSize:10,color:"#475569"}}>Total</div><div style={{fontSize:20,fontWeight:700,color:"#10B981"}}>{(b.rate*(b.days||gdb(b.start,b.end)))+(Number(b.extraFees)||0)} €</div></div>
                     </div>
                     {b.notes&&<Row icon="💬" label="Notes" value={b.notes}/>}
                   </div>
                   <div style={{padding:"10px 22px 22px",display:"flex",gap:7,flexWrap:"wrap"}}>
                     <button onClick={()=>openEdit(b)} style={{flex:1,background:"#3B82F6",border:"none",color:"#fff",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>✏️ Modifier</button>
-                    <button onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});setModal(null);}} style={{flex:1,background:"#1a1a2e30",border:"1px solid #3B82F640",color:"#3B82F6",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>📄 Contrat</button>
+                    <button onClick={()=>{setPage("contracts");setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence",rate:b.rate,days:b.days||null});setModal(null);}} style={{flex:1,background:"#1a1a2e30",border:"1px solid #3B82F640",color:"#3B82F6",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>📄 Contrat</button>
                     <button onClick={()=>setDc(b.id)} style={{flex:1,background:"#EF444420",border:"1px solid #EF444440",color:"#EF4444",padding:"10px",borderRadius:8,cursor:"pointer",fontWeight:600,fontSize:12}}>🗑</button>
                   </div>
                   {dc===b.id&&<div style={{padding:"0 22px 18px"}}><div style={{background:"#EF444415",border:"1px solid #EF444430",borderRadius:8,padding:"11px"}}><div style={{fontSize:11,color:"#EF4444",marginBottom:9,fontWeight:600}}>Confirmer la suppression ?</div><div style={{display:"flex",gap:6}}><button onClick={()=>delBk(b.id)} style={{flex:1,background:"#EF4444",border:"none",color:"#fff",padding:"7px",borderRadius:6,cursor:"pointer",fontWeight:600,fontSize:11}}>Oui</button><button onClick={()=>setDc(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"7px",borderRadius:6,cursor:"pointer",fontSize:11}}>Non</button></div></div></div>}
