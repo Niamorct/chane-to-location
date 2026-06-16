@@ -1604,7 +1604,7 @@ export default function App(){
                         return(
                           <div style={{position:"absolute",top:"100%",left:0,right:0,marginTop:4,background:S1,border:"1px solid "+S3,borderRadius:9,boxShadow:"0 8px 24px rgba(0,0,0,.5)",zIndex:50,maxHeight:180,overflowY:"auto"}}>
                             {matches.map(c=>(
-                              <div key={c.name} onMouseDown={()=>{setForm({...form,client:c.name,phone:c.phone||form.phone,email:c.email||form.email,address:c.address||form.address,licenseNum:c.licenseNum||form.licenseNum});setClientSuggest(false);}}
+                              <div key={c.name} onMouseDown={()=>{setForm({...form,client:c.name,phone:c.phone||form.phone,email:c.email||form.email,address:c.address||form.address,licenseNum:c.licenseNum||form.licenseNum,licenseDate:c.licenseDate||form.licenseDate,idNum:c.idNum||form.idNum});setClientSuggest(false);}}
                                 style={{padding:"9px 11px",cursor:"pointer",borderBottom:"1px solid "+S2,display:"flex",alignItems:"center",gap:8}}>
                                 <span style={{width:24,height:24,borderRadius:"50%",background:"#3B82F625",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#3B82F6",flexShrink:0}}>{c.name.charAt(0).toUpperCase()}</span>
                                 <div style={{flex:1,minWidth:0}}>
