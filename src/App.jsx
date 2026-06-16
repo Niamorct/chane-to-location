@@ -537,18 +537,18 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
       "</div></body></html>";
   }
 
-  function printIn(){
+  async function printIn(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
+    if(logExport)await logExport("edl_in",selBooking,selVehicle,html);
     openPDFBlob(html,"EDL_Recuperation_"+selBooking.client.replace(/ /g,"_")+".html");
-    if(logExport)logExport("edl_in",selBooking,selVehicle,html);
   }
 
-  function printOut(){
+  async function printOut(){
     if(!selBooking||!selVehicle)return;
     const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
+    if(logExport)await logExport("edl_out",selBooking,selVehicle,html);
     openPDFBlob(html,"EDL_Depose_"+selBooking.client.replace(/ /g,"_")+".html");
-    if(logExport)logExport("edl_out",selBooking,selVehicle,html);
   }
 
   return(
@@ -823,13 +823,13 @@ export default function App(){
       if(!w)return;w.document.write(html);w.document.close();
     }
   };
-  const exportPDF=(b,v)=>{
+  const exportPDF=async(b,v)=>{
     const bm={...b,...cex};
     const html=cHTML(bm,v,cco);
     const cn="Contrat_CTR-"+new Date().getFullYear()+"-"+String(b.id).padStart(4,"0")+"_"+b.client.replace(/\s+/g,"_")+".html";
+    await upsertClient(b.client,{phone:bm.phone,email:bm.email,address:bm.address,licenseNum:bm.licenseNum});
+    await logExport("contract",b,v,html);
     openPDF(html,cn);
-    upsertClient(b.client,{phone:bm.phone,email:bm.email,address:bm.address,licenseNum:bm.licenseNum});
-    logExport("contract",b,v,html);
   };
 
 
@@ -1481,6 +1481,9 @@ export default function App(){
             );
           })}
         </div>}
+
+        {/* CONFIRMATION SUPPRESSION EXPORT */}
+        {dcExport&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:16}}><div style={{background:S1,borderRadius:15,width:"100%",maxWidth:360,border:"1px solid "+S2,padding:22}}><div style={{fontSize:15,fontWeight:700,color:"#EF4444",marginBottom:10}}>🗑 Supprimer cet export ?</div><div style={{fontSize:12,color:"#94A3B8",marginBottom:14}}>Cette action est irréversible.</div><div style={{display:"flex",gap:7}}><button onClick={()=>setDcExport(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:600,fontSize:12}}>Annuler</button><button onClick={async()=>{await deleteExport(dcExport);setDcExport(null);}} style={{flex:1,background:"#EF4444",border:"none",color:"#fff",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12}}>Supprimer</button></div></div></div>}
       </div>}
 
       {/* ── BASE ÉTATS DES LIEUX (uniquement PDF exportés) ── */}
@@ -1514,7 +1517,7 @@ export default function App(){
         {dcExport&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:16}}><div style={{background:S1,borderRadius:15,width:"100%",maxWidth:360,border:"1px solid "+S2,padding:22}}><div style={{fontSize:15,fontWeight:700,color:"#EF4444",marginBottom:10}}>🗑 Supprimer cet export ?</div><div style={{fontSize:12,color:"#94A3B8",marginBottom:14}}>Cette action est irréversible.</div><div style={{display:"flex",gap:7}}><button onClick={()=>setDcExport(null)} style={{flex:1,background:S2,border:"none",color:"#94A3B8",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:600,fontSize:12}}>Annuler</button><button onClick={async()=>{await deleteExport(dcExport);setDcExport(null);}} style={{flex:1,background:"#EF4444",border:"none",color:"#fff",padding:"9px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12}}>Supprimer</button></div></div></div>}
       </div>}
 
-      {/* ── MODALS ── */}      {/* ── MODALS ── */}      {/* ── MODALS ── */}
+      {/* ── MODALS ── */}
       {modal&&!dc?.type?.startsWith("v")&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",display:"flex",alignItems:mob?"flex-end":"center",justifyContent:"center",zIndex:250,padding:mob?0:16}} onClick={e=>e.target===e.currentTarget&&setModal(null)}>
           <div style={{background:S1,borderRadius:mob?"18px 18px 0 0":"18px",width:"100%",maxWidth:mob?"100%":490,border:"1px solid "+S2,boxShadow:"0 20px 60px rgba(0,0,0,.7)",maxHeight:mob?"92vh":"88vh",overflowY:"auto"}}>
@@ -1614,8 +1617,12 @@ export default function App(){
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>DÉBUT</label><input type="date" value={form.start||""} onChange={e=>setForm({...form,start:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
                       <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:4}}>FIN</label><input type="date" value={form.end||""} onChange={e=>setForm({...form,end:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"8px 10px",borderRadius:6,fontSize:12,boxSizing:"border-box"}}/></div>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}><Fld label="Tarif/jour (€)" value={form.rate} onChange={val=>setForm({...form,rate:val})} placeholder="75" type="number"/><Fld label="Caution (€)" value={form.deposit} onChange={val=>setForm({...form,deposit:val})} placeholder="300" type="number"/></div>
-                    {form.start&&form.end&&pd(form.end)>=pd(form.start)&&<div style={{background:"#10B98115",border:"1px solid #10B98130",borderRadius:7,padding:"7px 10px",fontSize:11}}><span style={{color:"#10B981",fontWeight:700}}>{gdb(form.start,form.end)} jour(s)</span>{form.rate&&<span style={{color:"#64748B"}}> · Total : <strong style={{color:"#F59E0B"}}>{Number(form.rate)*gdb(form.start,form.end)} €</strong></span>}</div>}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                      <Fld label="Tarif (€)" value={form.rate} onChange={val=>setForm({...form,rate:val})} placeholder="75" type="number"/>
+                      <Fld label="Nombre de jours" value={form.days??(form.start&&form.end&&pd(form.end)>=pd(form.start)?gdb(form.start,form.end):"")} onChange={val=>setForm({...form,days:val})} placeholder="1" type="number"/>
+                    </div>
+                    <Fld label="Caution (€)" value={form.deposit} onChange={val=>setForm({...form,deposit:val})} placeholder="300" type="number"/>
+                    {form.start&&form.end&&pd(form.end)>=pd(form.start)&&<div style={{background:"#10B98115",border:"1px solid #10B98130",borderRadius:7,padding:"7px 10px",fontSize:11}}><span style={{color:"#10B981",fontWeight:700}}>{form.days??gdb(form.start,form.end)} jour(s) facturé(s)</span>{form.rate&&<span style={{color:"#64748B"}}> · Total : <strong style={{color:"#F59E0B"}}>{Number(form.rate)*Number(form.days??gdb(form.start,form.end))} €</strong></span>}</div>}
                     <Fld label="Notes" value={form.notes} onChange={val=>setForm({...form,notes:val})} placeholder="Informations…" textarea/>
                   </div>
                   <div style={{padding:"0 22px 22px",display:"flex",gap:7}}>
