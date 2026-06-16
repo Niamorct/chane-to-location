@@ -700,11 +700,11 @@ export default function App(){
     if(!form.client||!form.start||!form.end||!form.rate)return;
     if(pd(form.end)<pd(form.start))return;
     setSyncing(true);
-    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||"",pickup_location:form.pickupLocation||"agence",drop_location:form.dropLocation||"agence"};
+    const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||""};
     try{
       if(modal.type==="add"||modal.type==="add-g"){const[r]=await dbIns("bookings",p);setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");}
       else{await dbUpd("bookings",form.id,p);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));showT("Réservation modifiée ✓");}
-    }catch(e){showT("Erreur","error");}
+    }catch(e){showT("Erreur : "+String(e?.message||e),"error");}
     setSyncing(false);setModal(null);
   };
   const delBk=async id=>{setSyncing(true);await dbDel("bookings",id);setBookings(prev=>prev.filter(b=>b.id!==id));setModal(null);setDc(null);showT("Supprimée","info");setSyncing(false);};
