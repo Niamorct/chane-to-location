@@ -725,16 +725,24 @@ export default function App(){
     if(pd(form.end)<pd(form.start))return;
     setSyncing(true);
     const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",license_date:form.licenseDate||null,id_num:form.idNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||"",extra_fees:Number(form.extraFees)||0,extra_fees_note:form.extraFeesNote||"",days:form.days?Number(form.days):null};
+    console.log("[saveBk] form.days=",form.days,"payload.days=",p.days,"form.id=",form.id,"modal.type=",modal.type);
     try{
       if(modal.type==="add"||modal.type==="add-g"){
         const res=await dbIns("bookings",p);
         if(!Array.isArray(res))throw new Error(res?.message||"Réponse invalide du serveur");
         const r=res[0];
+        console.log("[saveBk] insert response:",r);
         setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");
       }
-      else{await dbUpd("bookings",form.id,p);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));showT("Réservation modifiée ✓");}
+      else{
+        const res=await dbUpd("bookings",form.id,p);
+        console.log("[saveBk] update response:",res);
+        if(Array.isArray(res)&&res[0]){setBookings(prev=>prev.map(b=>b.id===form.id?mb(res[0]):b));}
+        else{console.warn("[saveBk] update did NOT return an array, server response:",res);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));}
+        showT("Réservation modifiée ✓");
+      }
       upsertClient(form.client,{phone:form.phone,email:form.email,address:form.address,licenseNum:form.licenseNum,licenseDate:form.licenseDate,idNum:form.idNum});
-    }catch(e){showT("Erreur : "+String(e?.message||e),"error");}
+    }catch(e){console.error("[saveBk] error:",e);showT("Erreur : "+String(e?.message||e),"error");}
     setSyncing(false);setModal(null);
   };
   const delBk=async id=>{setSyncing(true);await dbDel("bookings",id);setBookings(prev=>prev.filter(b=>b.id!==id));setModal(null);setDc(null);showT("Supprimée","info");setSyncing(false);};
