@@ -17,7 +17,7 @@ const EC=["Carburant","Entretien","Assurance","Réparation","Nettoyage","Péage"
 const MFR=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const CO={name:"Chane-To Location",address:"712 rue de la gare, 97440 Saint-André, La Réunion",phone:"+262693010094",email:"chanetolocation@gmail.com",siret:"89512496400027",rcs:"895 124 964"};
 
-const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",mileage:r.mileage||"",fuel:r.fuel||"Essence"});
+const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",fuel:r.fuel||"Essence"});
 const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence",extraFees:r.extra_fees||0,extraFeesNote:r.extra_fees_note||""});
 const me=r=>({id:r.id,vehicleId:r.vehicle_id,date:r.date,amount:r.amount,category:r.category,note:r.note||""});
 const mc=r=>({id:r.id,name:r.name,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",notes:r.notes||"",createdAt:r.created_at});
@@ -103,7 +103,6 @@ function cHTML(b,v,co){
 <div class="fr"><span class="fl">Type</span><span class="fv">${v.type}</span></div>
 <div class="fr"><span class="fl">Année</span><span class="fv">${v.year||"—"}</span></div>
 <div class="fr"><span class="fl">Carburant</span><span class="fv">${v.fuel||"—"}</span></div>
-<div class="fr"><span class="fl">Km départ</span><span class="fv">${v.mileage||"—"} km</span></div>
 </div></div></div>
 <div class="s"><div class="sh">📅 PÉRIODE & LIEUX</div><div class="sb"><div class="g3">
 <div class="fr"><span class="fl">Départ</span><span class="fv">${fdl(b.start)}</span></div>
@@ -735,12 +734,12 @@ export default function App(){
   };
   const delBk=async id=>{setSyncing(true);await dbDel("bookings",id);setBookings(prev=>prev.filter(b=>b.id!==id));setModal(null);setDc(null);showT("Supprimée","info");setSyncing(false);};
 
-  const openAddV=()=>{setForm({name:"",plate:"",type:"Berline",color:VC[Math.floor(Math.random()*VC.length)],year:"",mileage:"",fuel:"Essence"});setModal({type:"add-v"});};
+  const openAddV=()=>{setForm({name:"",plate:"",type:"Berline",color:VC[Math.floor(Math.random()*VC.length)],year:"",fuel:"Essence"});setModal({type:"add-v"});};
   const openEditV=v=>{setForm({...v});setModal({type:"edit-v"});};
   const saveV=async()=>{
     if(!form.name||!form.plate||!form.type)return;
     setSyncing(true);
-    const p={name:form.name,plate:form.plate,type:form.type,color:form.color,year:form.year||"",mileage:form.mileage||"",fuel:form.fuel||"Essence"};
+    const p={name:form.name,plate:form.plate,type:form.type,color:form.color,year:form.year||"",fuel:form.fuel||"Essence"};
     try{
       if(modal.type==="add-v"){const[r]=await dbIns("vehicles",p);setVehicles(prev=>[...prev,mv(r)]);showT("Véhicule ajouté ✓");}
       else{await dbUpd("vehicles",form.id,p);setVehicles(prev=>prev.map(v=>v.id===form.id?mv({...p,id:form.id}):v));showT("Modifié ✓");}
@@ -1063,7 +1062,6 @@ export default function App(){
                     <div style={{fontSize:11,color:"#475569",marginBottom:mob?6:4}}>{vehicle.plate} · {vehicle.type} · {vehicle.fuel||"—"}</div>
                     <div style={{display:"flex",gap:mob?8:16,flexWrap:"wrap"}}>
                       {vehicle.year&&<span style={{fontSize:11,color:"#64748B"}}>📅 {vehicle.year}</span>}
-                      {vehicle.mileage&&<span style={{fontSize:11,color:"#64748B"}}>🛣 {Number(vehicle.mileage).toLocaleString("fr-FR")} km</span>}
                     </div>
                   </div>
                   <div style={{flexShrink:0,background:"linear-gradient(135deg,#10B981,#3B82F6)",borderRadius:10,padding:mob?"8px 12px":"10px 16px",color:"#fff",fontSize:mob?11:12,fontWeight:700,textAlign:"center"}}>
@@ -1649,7 +1647,7 @@ export default function App(){
                   <div style={{padding:"14px 22px",display:"flex",flexDirection:"column",gap:12}}>
                     <Fld label="Nom" value={form.name} onChange={val=>setForm({...form,name:val})} placeholder="ex: Peugeot 308"/>
                     <Fld label="Plaque" value={form.plate} onChange={val=>setForm({...form,plate:val})} placeholder="ex: AB-123-CD"/>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}><Fld label="Année" value={form.year} onChange={val=>setForm({...form,year:val})} placeholder="2021" type="number"/><Fld label="Km" value={form.mileage} onChange={val=>setForm({...form,mileage:val})} placeholder="48500" type="number"/></div>
+                    <Fld label="Année" value={form.year} onChange={val=>setForm({...form,year:val})} placeholder="2021" type="number"/>
                     <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>CARBURANT</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{FU.map(f=><button key={f} onClick={()=>setForm({...form,fuel:f})} style={{background:form.fuel===f?"#10B981":S2,border:"1px solid "+(form.fuel===f?"#10B981":S3),color:form.fuel===f?"#fff":"#94A3B8",padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:form.fuel===f?700:400}}>{f}</button>)}</div></div>
                     <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>TYPE</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{VT.map(t=><button key={t} onClick={()=>setForm({...form,type:t})} style={{background:form.type===t?"linear-gradient(135deg,#1a1a2e,#3B82F6)":S2,border:"1px solid "+(form.type===t?"#3B82F6":S3),color:form.type===t?"#fff":"#94A3B8",padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:form.type===t?700:400}}>{VE[t]} {t}</button>)}</div></div>
                     <div><label style={{fontSize:10,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>COULEUR</label><div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{VC.map(c=><button key={c} onClick={()=>setForm({...form,color:c})} style={{width:28,height:28,borderRadius:"50%",background:c,border:form.color===c?"3px solid #fff":"3px solid transparent",cursor:"pointer",outline:form.color===c?"2px solid "+c:"none"}}/>)}</div></div>
