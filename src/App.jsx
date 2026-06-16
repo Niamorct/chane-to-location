@@ -27,7 +27,7 @@ const pd=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
 const fd=s=>pd(s).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});
 const fdl=s=>pd(s).toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"});
 const fds=s=>pd(s).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"});
-const ad=(ds,n)=>{const d=pd(ds);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
+const ad=(ds,n)=>{const d=pd(ds);d.setDate(d.getDate()+n);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0");return y+"-"+m+"-"+dd;};
 const dir=(date,s,e)=>{const d=pd(date),a=pd(s),b=pd(e);return d>=a&&d<=b;};
 const gdb=(s,e)=>Math.round((pd(e).getTime()-pd(s).getTime())/(864e5))+1;
 const gym=ds=>{const d=pd(ds);return{y:d.getFullYear(),m:d.getMonth()};};
@@ -650,7 +650,7 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
 
 
 export default function App(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=(()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})();
   const TY=new Date().getFullYear(),TM=new Date().getMonth();
   const mob=useIsMobile();
   const BG="#0F1117",S1="#161B27",S2="#1E2535",S3="#2D3748";
