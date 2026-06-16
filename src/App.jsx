@@ -726,7 +726,12 @@ export default function App(){
     setSyncing(true);
     const p={vehicle_id:Number(form.vehicleId),client:form.client,phone:form.phone||"",email:form.email||"",address:form.address||"",license_num:form.licenseNum||"",license_date:form.licenseDate||null,id_num:form.idNum||"",start_date:form.start,end_date:form.end,rate:Number(form.rate),deposit:Number(form.deposit)||0,notes:form.notes||"",extra_fees:Number(form.extraFees)||0,extra_fees_note:form.extraFeesNote||"",days:form.days?Number(form.days):null};
     try{
-      if(modal.type==="add"||modal.type==="add-g"){const[r]=await dbIns("bookings",p);setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");}
+      if(modal.type==="add"||modal.type==="add-g"){
+        const res=await dbIns("bookings",p);
+        if(!Array.isArray(res))throw new Error(res?.message||"Réponse invalide du serveur");
+        const r=res[0];
+        setBookings(prev=>[...prev,mb(r)]);showT("Réservation ajoutée ✓");
+      }
       else{await dbUpd("bookings",form.id,p);setBookings(prev=>prev.map(b=>b.id===form.id?mb({...p,id:form.id}):b));showT("Réservation modifiée ✓");}
       upsertClient(form.client,{phone:form.phone,email:form.email,address:form.address,licenseNum:form.licenseNum,licenseDate:form.licenseDate,idNum:form.idNum});
     }catch(e){showT("Erreur : "+String(e?.message||e),"error");}
@@ -741,7 +746,12 @@ export default function App(){
     setSyncing(true);
     const p={name:form.name,plate:form.plate,type:form.type,color:form.color,year:form.year||"",fuel:form.fuel||"Essence"};
     try{
-      if(modal.type==="add-v"){const[r]=await dbIns("vehicles",p);setVehicles(prev=>[...prev,mv(r)]);showT("Véhicule ajouté ✓");}
+      if(modal.type==="add-v"){
+        const res=await dbIns("vehicles",p);
+        if(!Array.isArray(res))throw new Error(res?.message||"Réponse invalide du serveur");
+        const r=res[0];
+        setVehicles(prev=>[...prev,mv(r)]);showT("Véhicule ajouté ✓");
+      }
       else{await dbUpd("vehicles",form.id,p);setVehicles(prev=>prev.map(v=>v.id===form.id?mv({...p,id:form.id}):v));showT("Modifié ✓");}
     }catch(e){showT("Erreur","error");}
     setSyncing(false);setModal(null);
@@ -764,7 +774,12 @@ export default function App(){
     setSyncing(true);
     const p={vehicle_id:Number(form.vehicleId),date:form.date,amount:Number(form.amount),category:form.category,note:form.note||""};
     try{
-      if(modal.type==="add-e"){const[r]=await dbIns("expenses",p);setExpenses(prev=>[...prev,me(r)]);showT("Dépense ajoutée ✓");}
+      if(modal.type==="add-e"){
+        const res=await dbIns("expenses",p);
+        if(!Array.isArray(res))throw new Error(res?.message||"Réponse invalide du serveur");
+        const r=res[0];
+        setExpenses(prev=>[...prev,me(r)]);showT("Dépense ajoutée ✓");
+      }
       else{await dbUpd("expenses",form.id,p);setExpenses(prev=>prev.map(e=>e.id===form.id?me({...p,id:form.id}):e));showT("Modifiée ✓");}
     }catch(e){showT("Erreur","error");}
     setSyncing(false);setModal(null);
@@ -792,14 +807,17 @@ export default function App(){
       const existing=clients.find(c=>c.name.toLowerCase()===name.toLowerCase());
       const payload={name,phone:info.phone||"",email:info.email||"",address:info.address||"",license_num:info.licenseNum||"",license_date:info.licenseDate||null,id_num:info.idNum||""};
       if(existing){await dbUpd("clients",existing.id,payload);setClients(prev=>prev.map(c=>c.id===existing.id?{...c,...mc({...payload,id:existing.id})}:c));}
-      else{const[r]=await dbIns("clients",payload);if(r)setClients(prev=>[...prev,mc(r)]);}
+      else{
+        const res=await dbIns("clients",payload);
+        if(Array.isArray(res)&&res[0])setClients(prev=>[...prev,mc(res[0])]);
+      }
     }catch(e){/* table clients absente ou erreur silencieuse */}
   };
   const logExport=async(type,b,v,html)=>{
     try{
       const payload={type,client:b.client,vehicle_name:v?.name||"",vehicle_plate:v?.plate||"",date_start:b.start,date_end:b.end,booking_id:b.id,html_content:html||""};
-      const[r]=await dbIns("document_exports",payload);
-      if(r)setExportsLog(prev=>[mx(r),...prev]);
+      const res=await dbIns("document_exports",payload);
+      if(Array.isArray(res)&&res[0])setExportsLog(prev=>[mx(res[0]),...prev]);
     }catch(e){/* table document_exports absente ou erreur silencieuse */}
   };
   const deleteExport=async id=>{
@@ -1434,10 +1452,8 @@ export default function App(){
               <Fld label="Email" value={clientForm.email} onChange={v=>setClientForm({...clientForm,email:v})} placeholder="client@email.fr"/>
               <Fld label="Adresse" value={clientForm.address} onChange={v=>setClientForm({...clientForm,address:v})} placeholder="12 rue de la Paix..."/>
               <Fld label="N° Permis" value={clientForm.licenseNum} onChange={v=>setClientForm({...clientForm,licenseNum:v})} placeholder="123456789012"/>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
-                <div><label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:5}}>DATE OBTENTION PERMIS</label><input type="date" value={clientForm.licenseDate||""} onChange={e=>setClientForm({...clientForm,licenseDate:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"9px 11px",borderRadius:7,fontSize:13}}/></div>
-                <Fld label="N° Pièce d'identité" value={clientForm.idNum} onChange={v=>setClientForm({...clientForm,idNum:v})} placeholder="CNI / Passeport..."/>
-              </div>
+              <div><label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:5}}>DATE OBTENTION PERMIS</label><input type="date" value={clientForm.licenseDate||""} onChange={e=>setClientForm({...clientForm,licenseDate:e.target.value})} style={{width:"100%",background:BG,border:"1px solid "+S3,color:"#E2E8F0",padding:"9px 11px",borderRadius:7,fontSize:13,boxSizing:"border-box"}}/></div>
+              <Fld label="N° Pièce d'identité" value={clientForm.idNum} onChange={v=>setClientForm({...clientForm,idNum:v})} placeholder="CNI / Passeport..."/>
               <div style={{background:BG,borderRadius:8,padding:"10px 12px",fontSize:11,color:"#64748B"}}>
                 📋 {(clientsList.find(c=>c.name===selClient)?.bookingsCount)||0} réservation(s) enregistrée(s)
               </div>
