@@ -560,7 +560,7 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds}){
         {bookings.length===0
           ?<div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0"}}>Aucune réservation</div>
           :<div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:220,overflowY:"auto"}}>
-            {[...bookings].sort((a,b)=>new Date(a.start)-new Date(b.start)).map(b=>{
+            {[...bookings].sort((a,b)=>new Date(b.start)-new Date(a.start)).map(b=>{
               const vv=vehicles.find(v=>v.id===b.vehicleId),isSel=selBookingId===b.id;
               return(
                 <div key={b.id} onClick={()=>{setSelBookingId(b.id);setEdlIn({fuel:2,cleanIn:4,cleanOut:4,mileage:vv?.mileage||"",notes:"",damages:[],photos:[]});setEdlOut({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});}}
@@ -1225,7 +1225,7 @@ export default function App(){
               <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>📋 Réservation</div>
               {bookings.length===0?<div style={{color:"#475569",fontSize:11,textAlign:"center",padding:"14px 0"}}>Aucune réservation</div>:(
                 <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:mob?180:360,overflowY:"auto"}}>
-                  {[...bookings].sort((a,b)=>pd(a.start)-pd(b.start)).map(b=>{
+                  {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
                     const v=vehicles.find(v=>v.id===b.vehicleId),isSel=cbid===b.id;
                     return(
                       <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:0,extraFeesNote:"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence"});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
