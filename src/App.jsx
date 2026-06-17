@@ -34,6 +34,13 @@ const fds=s=>pd(s).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"});
 const ad=(ds,n)=>{const d=pd(ds);d.setDate(d.getDate()+n);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0");return y+"-"+m+"-"+dd;};
 const dir=(date,s,e)=>{const d=pd(date),a=pd(s),b=pd(e);return d>=a&&d<=b;};
 const gdb=(s,e)=>Math.round((pd(e).getTime()-pd(s).getTime())/(864e5))+1;
+function bkStatus(b,todayStr){
+  if(b.end<todayStr)return"past";
+  if(b.start<=todayStr&&b.end>=todayStr)return"current";
+  return"upcoming";
+}
+const BK_STATUS_COLOR={past:"#64748B",current:"#10B981",upcoming:"#3B82F6"};
+const BK_STATUS_LABEL={past:"Passée",current:"En cours",upcoming:"À venir"};
 const gym=ds=>{const d=pd(ds);return{y:d.getFullYear(),m:d.getMonth()};};
 const br=b=>b.rate*(b.days||gdb(b.start,b.end));
 const avail=(vid,s,e,bks,ex)=>!bks.some(b=>b.vehicleId===vid&&b.id!==ex&&!(pd(b.end)<pd(s)||pd(b.start)>pd(e)));
@@ -566,6 +573,8 @@ function LoginScreen({onLogin}){
 }
 
 function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport}){
+  const[bkFilter,setBkFilter]=useState("all");
+  const today=(()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})();
   const isPWA=()=>window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
   const openPDFBlob=(html,filename)=>{
     if(isPWA()){
@@ -688,15 +697,23 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
       {/* Sélection réservation */}
       <div style={{background:S1,border:"1px solid "+S2,borderRadius:14,padding:mob?14:18,marginBottom:16}}>
         <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:12}}>📋 Sélectionner une réservation</div>
+        <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
+          {[{k:"all",l:"Toutes"},{k:"upcoming",l:"À venir"},{k:"current",l:"En cours"},{k:"past",l:"Passées"}].map(f=>(
+            <button key={f.k} onClick={()=>setBkFilter(f.k)} style={{background:bkFilter===f.k?(f.k==="all"?"#3B82F6":BK_STATUS_COLOR[f.k]):S2,border:"none",color:bkFilter===f.k?"#fff":"#94A3B8",padding:"5px 11px",borderRadius:20,cursor:"pointer",fontSize:11,fontWeight:600}}>{f.l}</button>
+          ))}
+        </div>
         {bookings.length===0
           ?<div style={{color:"#475569",fontSize:12,textAlign:"center",padding:"16px 0"}}>Aucune réservation</div>
           :<div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:220,overflowY:"auto"}}>
-            {[...bookings].sort((a,b)=>new Date(b.start)-new Date(a.start)).map(b=>{
-              const vv=vehicles.find(v=>v.id===b.vehicleId),isSel=selBookingId===b.id;
+            {[...bookings].filter(b=>bkFilter==="all"||bkStatus(b,today)===bkFilter).sort((a,b)=>new Date(b.start)-new Date(a.start)).map(b=>{
+              const vv=vehicles.find(v=>v.id===b.vehicleId),isSel=selBookingId===b.id,st=bkStatus(b,today),sc=BK_STATUS_COLOR[st];
               return(
                 <div key={b.id} onClick={()=>{setSelBookingId(b.id);setEdlIn({fuel:2,cleanIn:4,cleanOut:4,mileage:vv?.mileage||"",notes:"",damages:[],photos:[]});setEdlOut({fuel:2,cleanIn:4,cleanOut:4,mileage:"",notes:"",damages:[],photos:[]});}}
-                  style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:9,padding:"9px 11px",cursor:"pointer"}}>
-                  <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
+                  style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":sc+"40"),borderLeft:"3px solid "+sc,borderRadius:9,padding:"9px 11px",cursor:"pointer"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
+                    <span style={{fontSize:9,fontWeight:700,color:sc,background:sc+"18",padding:"2px 7px",borderRadius:10,flexShrink:0,whiteSpace:"nowrap"}}>{BK_STATUS_LABEL[st]}</span>
+                  </div>
                   <div style={{fontSize:10,color:"#64748B",marginTop:1,display:"flex",alignItems:"center",gap:6}}>
                     <span style={{width:6,height:6,borderRadius:"50%",background:vv?.color||"#475569",display:"inline-block",flexShrink:0}}/>
                     {vv?.name||"?"} · {vv?.plate||"?"}
@@ -805,6 +822,7 @@ function MainApp(){
   const[docSort,setDocSort]=useState("desc");
   const[dcClient,setDcClient]=useState(null);
   const[dcExport,setDcExport]=useState(null);
+  const[bkFilter,setBkFilter]=useState("all"); // "all"|"past"|"current"|"upcoming"
   const[clientForm,setClientForm]=useState({phone:"",email:"",address:"",licenseNum:"",licenseDate:"",idNum:""});
 
   const[tYear,setTYear]=useState(TY);
@@ -1459,13 +1477,21 @@ function MainApp(){
             </div>
             <div style={card}>
               <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>📋 Réservation</div>
+              <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
+                {[{k:"all",l:"Toutes"},{k:"upcoming",l:"À venir"},{k:"current",l:"En cours"},{k:"past",l:"Passées"}].map(f=>(
+                  <button key={f.k} onClick={()=>setBkFilter(f.k)} style={{background:bkFilter===f.k?(f.k==="all"?"#3B82F6":BK_STATUS_COLOR[f.k]):S2,border:"none",color:bkFilter===f.k?"#fff":"#94A3B8",padding:"4px 10px",borderRadius:20,cursor:"pointer",fontSize:10,fontWeight:600}}>{f.l}</button>
+                ))}
+              </div>
               {bookings.length===0?<div style={{color:"#475569",fontSize:11,textAlign:"center",padding:"14px 0"}}>Aucune réservation</div>:(
                 <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:mob?180:360,overflowY:"auto"}}>
-                  {[...bookings].sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
-                    const v=vehicles.find(v=>v.id===b.vehicleId),isSel=cbid===b.id;
+                  {[...bookings].filter(b=>bkFilter==="all"||bkStatus(b,today)===bkFilter).sort((a,b)=>pd(b.start)-pd(a.start)).map(b=>{
+                    const v=vehicles.find(v=>v.id===b.vehicleId),isSel=cbid===b.id,st=bkStatus(b,today),sc=BK_STATUS_COLOR[st];
                     return(
-                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence",rate:b.rate,days:b.days||null});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":S2),borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
-                        <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
+                      <div key={b.id} onClick={()=>{setCbid(b.id);setCex({email:b.email||"",address:b.address||"",licenseNum:b.licenseNum||"",deposit:b.deposit||0,extraFees:b.extraFees||0,extraFeesNote:b.extraFeesNote||"",pickupLocation:b.pickupLocation||"agence",dropLocation:b.dropLocation||"agence",rate:b.rate,days:b.days||null});}} style={{background:isSel?"#3B82F620":BG,border:"1.5px solid "+(isSel?"#3B82F6":sc+"40"),borderLeft:"3px solid "+sc,borderRadius:8,padding:"8px 10px",cursor:"pointer"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
+                          <div style={{fontSize:11,fontWeight:700,color:"#F1F5F9"}}>{b.client}</div>
+                          <span style={{fontSize:8,fontWeight:700,color:sc,background:sc+"18",padding:"1px 6px",borderRadius:10,flexShrink:0,whiteSpace:"nowrap"}}>{BK_STATUS_LABEL[st]}</span>
+                        </div>
                         <div style={{fontSize:9,color:"#64748B",marginTop:1}}>{v?.name||"?"} · {fd(b.start)} → {fd(b.end)}</div>
                         <div style={{fontSize:11,fontWeight:700,color:"#F59E0B",marginTop:1}}>{b.rate*(b.days||gdb(b.start,b.end))} €</div>
                         {isSel&&<div style={{fontSize:9,color:"#3B82F6",fontWeight:600,marginTop:3}}>✓ Sélectionné</div>}
