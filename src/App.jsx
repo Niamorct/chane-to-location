@@ -360,9 +360,12 @@ function PhotoUpload({photos,onAdd,onRemove,label}){
 
 
 function SignatureCanvas({label,value,onChange,color="#3B82F6"}){
+  const[open,setOpen]=useState(false);
   const canvasRef=useRef(null);
   const drawing=useRef(false);
   const lastPos=useRef(null);
+  const[hasDrawn,setHasDrawn]=useState(false);
+  const mob=useIsMobile();
 
   function getPos(e,canvas){
     const r=canvas.getBoundingClientRect();
@@ -396,7 +399,7 @@ function SignatureCanvas({label,value,onChange,color="#3B82F6"}){
     ctx.lineJoin="round";
     ctx.stroke();
     lastPos.current=pos;
-    onChange(canvas.toDataURL());
+    setHasDrawn(true);
   }
 
   function endDraw(){
@@ -404,32 +407,78 @@ function SignatureCanvas({label,value,onChange,color="#3B82F6"}){
     lastPos.current=null;
   }
 
-  function clear(){
+  function clearCanvas(){
     const canvas=canvasRef.current;
     if(!canvas)return;
     const ctx=canvas.getContext("2d");
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    setHasDrawn(false);
+  }
+
+  function clearSaved(e){
+    e.stopPropagation();
     onChange(null);
+  }
+
+  function openModal(){
+    setOpen(true);
+    setTimeout(()=>{
+      const canvas=canvasRef.current;
+      if(!canvas)return;
+      const ctx=canvas.getContext("2d");
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      setHasDrawn(false);
+      if(value){
+        const img=new Image();
+        img.onload=()=>{ctx.drawImage(img,0,0,canvas.width,canvas.height);setHasDrawn(true);};
+        img.src=value;
+      }
+    },50);
+  }
+
+  function validate(){
+    const canvas=canvasRef.current;
+    if(!canvas||!hasDrawn)return;
+    onChange(canvas.toDataURL());
+    setOpen(false);
   }
 
   return(
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
         <div style={{fontSize:11,color:"#94A3B8",fontWeight:600}}>{label}</div>
-        {value&&<button onClick={clear} style={{background:"#EF444420",border:"1px solid #EF444430",color:"#EF4444",padding:"3px 10px",borderRadius:6,cursor:"pointer",fontSize:10,fontWeight:600}}>✕ Effacer</button>}
+        {value&&<button onClick={clearSaved} style={{background:"#EF444420",border:"1px solid #EF444430",color:"#EF4444",padding:"3px 10px",borderRadius:6,cursor:"pointer",fontSize:10,fontWeight:600}}>✕ Effacer</button>}
       </div>
-      <div style={{border:"1.5px solid "+(value?"#3B82F6":"#2D3748"),borderRadius:8,background:"#0F1117",overflow:"hidden",position:"relative"}}>
-        <canvas
-          ref={canvasRef}
-          width={400} height={120}
-          style={{display:"block",width:"100%",height:120,cursor:"crosshair",touchAction:"none"}}
-          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
-          onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
-        />
-        {!value&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-          <span style={{fontSize:12,color:"#334155",fontStyle:"italic"}}>✍️ Signez ici</span>
-        </div>}
+      <div onClick={openModal} style={{border:"1.5px solid "+(value?"#3B82F6":"#2D3748"),borderRadius:8,background:"#0F1117",overflow:"hidden",position:"relative",height:70,cursor:"pointer"}}>
+        {value
+          ?<img src={value} alt="signature" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+          :<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:12,color:"#334155",fontStyle:"italic"}}>✍️ Appuyer pour signer</span></div>}
       </div>
+
+      {open&&<div onClick={()=>setOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:mob?0:20}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:"#161B27",borderRadius:mob?0:18,width:"100%",height:mob?"100%":"auto",maxWidth:mob?"100%":560,border:mob?"none":"1px solid #1E2535",display:"flex",flexDirection:"column"}}>
+          <div style={{padding:mob?"calc(env(safe-area-inset-top,0px) + 14px) 18px 12px":"18px 22px 14px",borderBottom:"1px solid #1E2535",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>{label}</div>
+            <button onClick={()=>setOpen(false)} style={{background:"#1E2535",border:"none",color:"#64748B",width:30,height:30,borderRadius:8,cursor:"pointer",fontSize:16}}>×</button>
+          </div>
+          <div style={{flex:1,display:"flex",flexDirection:"column",padding:mob?16:22,gap:14}}>
+            <div style={{fontSize:11,color:"#475569",textAlign:"center"}}>Signez avec le doigt ou la souris dans la zone ci-dessous</div>
+            <div style={{border:"2px solid #2D3748",borderRadius:12,background:"#fff",overflow:"hidden",flex:mob?1:undefined,minHeight:mob?0:280,position:"relative"}}>
+              <canvas
+                ref={canvasRef}
+                width={800} height={mob?900:480}
+                style={{display:"block",width:"100%",height:"100%",cursor:"crosshair",touchAction:"none"}}
+                onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+                onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
+              />
+            </div>
+            <div style={{display:"flex",gap:10,paddingBottom:mob?"env(safe-area-inset-bottom,0px)":0}}>
+              <button onClick={clearCanvas} style={{flex:1,background:"#1E2535",border:"none",color:"#94A3B8",padding:"13px",borderRadius:10,cursor:"pointer",fontWeight:600,fontSize:13}}>✕ Effacer</button>
+              <button onClick={validate} disabled={!hasDrawn} style={{flex:2,background:hasDrawn?"linear-gradient(135deg,#1a1a2e,#3B82F6)":"#1E2535",border:"none",color:hasDrawn?"#fff":"#475569",padding:"13px",borderRadius:10,cursor:hasDrawn?"pointer":"default",fontWeight:800,fontSize:13}}>✓ Valider la signature</button>
+            </div>
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }
