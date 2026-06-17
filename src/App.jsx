@@ -73,7 +73,7 @@ function cHTML(b,v,co){
 .al{font-size:7pt;opacity:.75;margin-bottom:2px;}.av{font-size:12pt;font-weight:900;}
 .at{text-align:center;margin-top:7px;border-top:1px solid rgba(255,255,255,.3);padding-top:7px;}
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:10px;}
-.si{border:1px solid #d1d5db;border-radius:5px;padding:9px 10px;}
+.si{border:1px solid #d1d5db;border-radius:5px;padding:9px 10px;min-height:140px;}
 .st{font-size:8pt;font-weight:700;margin-bottom:5px;}.sl{border-bottom:1.5px solid #374151;height:42px;margin-bottom:5px;}.sm{font-size:7pt;color:#6b7280;}
 .cgv-title{font-size:14pt;font-weight:900;color:#0F1117;text-align:center;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid #0F1117;}
 .cgv-art{margin-bottom:10px;}.cgv-at{font-size:9pt;font-weight:700;color:#0F1117;margin-bottom:4px;}
@@ -131,8 +131,8 @@ function cHTML(b,v,co){
 ${extraFees>0?"<div style='background:#fef3c7;border:1px solid #f59e0b;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#92400e;'><strong>Détail frais additionnels :</strong> "+b.extraFeesNote+" — "+extraFees+" €</div>":""}
 ${b.notes?"<div style='background:#f0f9ff;border:1px solid #0ea5e9;border-radius:5px;padding:7px 10px;margin-bottom:10px;font-size:7.5pt;color:#0369a1;text-align:center;font-weight:600;'>📋 "+b.notes+"</div>":""}
 <div class="sg">
-<div class="si"><div class="st">SIGNATURE DU LOUEUR</div>${b.sigLoueur?`<img src="${b.sigLoueur}" style="max-height:60px;display:block;margin:4px 0;"/>`:"<div class='sl'></div>"}<div class="sm">Lu et approuvé — ${co.name}</div><div class="sm">Cachet et signature</div></div>
-<div class="si"><div class="st">SIGNATURE DU LOCATAIRE</div>${b.sigLocataire?`<img src="${b.sigLocataire}" style="max-height:60px;display:block;margin:4px 0;"/>`:"<div class='sl'></div>"}<div class="sm">Lu et approuvé — ${b.client}</div><div class="sm">Précéder de la mention manuscrite « Lu et approuvé »</div></div>
+<div class="si"><div class="st">SIGNATURE DU LOUEUR</div>${b.sigLoueur?`<img src="${b.sigLoueur}" style="max-height:110px;width:100%;object-fit:contain;display:block;margin:6px 0;"/>`:"<div class='sl'></div>"}<div class="sm">Lu et approuvé — ${co.name}</div><div class="sm">Cachet et signature</div></div>
+<div class="si"><div class="st">SIGNATURE DU LOCATAIRE</div>${b.sigLocataire?`<img src="${b.sigLocataire}" style="max-height:110px;width:100%;object-fit:contain;display:block;margin:6px 0;"/>`:"<div class='sl'></div>"}<div class="sm">Lu et approuvé — ${b.client}</div><div class="sm">Précéder de la mention manuscrite « Lu et approuvé »</div></div>
 </div>
 <div class="ft">${co.name} — ${co.phone} — chanetolocation@gmail.com | Contrat ${cn} — ${ts} | Les Conditions Générales figurent en page suivante</div>
 </div>`;
@@ -603,7 +603,7 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
     ".fr:last-child{border:none;}.fl{font-size:8pt;color:#6b7280;font-weight:600;}.fv{font-size:9pt;color:#111827;font-weight:600;}"+
     ".gauge{display:flex;gap:3px;margin-top:4px;}.gc{flex:1;height:16px;border-radius:3px;border:1px solid #d1d5db;}"+
     ".gf{background:#3B82F6;}.ge{background:#f3f4f6;}"+
-    ".sig{border:1px solid #d1d5db;border-radius:5px;padding:10px;margin-top:10px;}"+
+    ".sig{border:1px solid #d1d5db;border-radius:5px;padding:10px;margin-top:10px;min-height:140px;}"+
     ".sl{border-bottom:1px solid #374151;height:40px;margin-bottom:5px;}"+
     ".ft{font-size:7pt;color:#9ca3af;text-align:center;margin-top:10px;}"+
     ".dl{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}"+
@@ -653,8 +653,8 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
       "<div class='s'><div class='sh'>🗺 DOMMAGES CONSTATÉS</div><div class='sb'>"+dmgHTML+"</div></div>"+
       notesHTML+photosHTML+
       "<div class='g2'>"+
-      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOUEUR</div>"+(data.sigLoueur?"<img src='"+data.sigLoueur+"' style='max-height:60px;display:block;margin:4px 0;'/>":"<div class='sl'></div>")+"<div style='font-size:7pt;color:#6b7280;'>CHANE-TO LOCATION</div></div>"+
-      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOCATAIRE</div>"+(data.sigLocataire?"<img src='"+data.sigLocataire+"' style='max-height:60px;display:block;margin:4px 0;'/>":"<div class='sl'></div>")+"<div style='font-size:7pt;color:#6b7280;'>"+bk.client+" — Lu et approuvé</div></div>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOUEUR</div>"+(data.sigLoueur?"<img src='"+data.sigLoueur+"' style='max-height:110px;width:100%;object-fit:contain;display:block;margin:6px 0;'/>":"<div class='sl'></div>")+"<div style='font-size:7pt;color:#6b7280;'>CHANE-TO LOCATION</div></div>"+
+      "<div class='sig'><div style='font-size:8pt;font-weight:700;margin-bottom:5px;'>SIGNATURE LOCATAIRE</div>"+(data.sigLocataire?"<img src='"+data.sigLocataire+"' style='max-height:110px;width:100%;object-fit:contain;display:block;margin:6px 0;'/>":"<div class='sl'></div>")+"<div style='font-size:7pt;color:#6b7280;'>"+bk.client+" — Lu et approuvé</div></div>"+
       "</div>"+
       "<div class='ft'>CHANE-TO LOCATION · "+title+" · "+bk.client+" · "+dateVal+"</div>"+
       "</div></body></html>";
