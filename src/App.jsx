@@ -302,19 +302,45 @@ function CarSchema({damages,onToggle,title}){
   );
 }
 
+function compressImage(file,maxW=1280,quality=0.7){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*(maxW/w));w=maxW;}
+        const canvas=document.createElement("canvas");
+        canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext("2d");
+        ctx.drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL("image/jpeg",quality));
+      };
+      img.onerror=reject;
+      img.src=ev.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function PhotoUpload({photos,onAdd,onRemove,label}){
-  const handleFile=e=>{
+  const[compressing,setCompressing]=useState(false);
+  const handleFile=async e=>{
     const files=Array.from(e.target.files);
-    files.forEach(file=>{
-      const reader=new FileReader();
-      reader.onload=ev=>onAdd({url:ev.target.result,name:file.name,date:new Date().toLocaleTimeString("fr-FR")});
-      reader.readAsDataURL(file);
-    });
     e.target.value="";
+    setCompressing(true);
+    for(const file of files){
+      try{
+        const url=await compressImage(file);
+        onAdd({url,name:file.name,date:new Date().toLocaleTimeString("fr-FR")});
+      }catch(err){/* photo ignorée si échec de compression */}
+    }
+    setCompressing(false);
   };
   return(
     <div>
-      <div style={{fontSize:11,color:"#94A3B8",fontWeight:600,marginBottom:8}}>{label}</div>
+      <div style={{fontSize:11,color:"#94A3B8",fontWeight:600,marginBottom:8}}>{label}{compressing&&<span style={{color:"#3B82F6",marginLeft:8}}>⏳ Optimisation…</span>}</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:8,marginBottom:8}}>
         {photos.map((p,i)=>(
           <div key={i} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"1",background:"#0F1117"}}>
@@ -322,10 +348,10 @@ function PhotoUpload({photos,onAdd,onRemove,label}){
             <button onClick={()=>onRemove(i)} style={{position:"absolute",top:2,right:2,background:"#EF4444",border:"none",color:"#fff",width:18,height:18,borderRadius:"50%",cursor:"pointer",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
           </div>
         ))}
-        <label style={{borderRadius:8,border:"1.5px dashed #2D3748",aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",background:"#0F1117",gap:4}}>
+        <label style={{borderRadius:8,border:"1.5px dashed #2D3748",aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:compressing?"wait":"pointer",background:"#0F1117",gap:4,opacity:compressing?0.5:1}}>
           <span style={{fontSize:20,color:"#475569"}}>📷</span>
           <span style={{fontSize:9,color:"#475569"}}>Ajouter</span>
-          <input type="file" accept="image/*" multiple onChange={handleFile} style={{display:"none"}}/>
+          <input type="file" accept="image/*" multiple onChange={handleFile} style={{display:"none"}} disabled={compressing}/>
         </label>
       </div>
     </div>
@@ -587,16 +613,20 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
 
   async function printIn(){
     if(!selBooking||!selVehicle)return;
-    const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
-    if(logExport)await logExport("edl_in",selBooking,selVehicle,html);
-    openPDFBlob(html,"EDL_Recuperation_"+selBooking.client.replace(/ /g,"_")+".html");
+    try{
+      const html=buildPDF("ÉTAT DES LIEUX — À LA RÉCUPÉRATION","Début location",fd(selBooking.start),selBooking,selVehicle,edlIn,null);
+      if(logExport)await logExport("edl_in",selBooking,selVehicle,html);
+      openPDFBlob(html,"EDL_Recuperation_"+selBooking.client.replace(/ /g,"_")+".html");
+    }catch(e){alert("Erreur lors de la génération du PDF : "+(e?.message||e));}
   }
 
   async function printOut(){
     if(!selBooking||!selVehicle)return;
-    const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
-    if(logExport)await logExport("edl_out",selBooking,selVehicle,html);
-    openPDFBlob(html,"EDL_Depose_"+selBooking.client.replace(/ /g,"_")+".html");
+    try{
+      const html=buildPDF("ÉTAT DES LIEUX — À LA DÉPOSE","Fin location",fd(selBooking.end),selBooking,selVehicle,edlOut,edlIn);
+      if(logExport)await logExport("edl_out",selBooking,selVehicle,html);
+      openPDFBlob(html,"EDL_Depose_"+selBooking.client.replace(/ /g,"_")+".html");
+    }catch(e){alert("Erreur lors de la génération du PDF : "+(e?.message||e));}
   }
 
   return(
