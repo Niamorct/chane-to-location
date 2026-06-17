@@ -17,6 +17,10 @@ const EC=["Carburant","Entretien","Assurance","Réparation","Nettoyage","Péage"
 const MFR=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const CO={name:"Chane-To Location",address:"712 rue de la gare, 97440 Saint-André, La Réunion",phone:"+262693010094",email:"chanetolocation@gmail.com",siret:"89512496400027",rcs:"895 124 964"};
 
+// Identifiant et mot de passe de connexion (modifiable ici directement dans le code)
+const APP_USER="Chane To Location";
+const APP_PASS="@Chanetolocation7754";
+
 const mv=r=>({id:r.id,name:r.name,plate:r.plate,type:r.type,color:r.color,year:r.year||"",fuel:r.fuel||"Essence"});
 const mb=r=>({id:r.id,vehicleId:r.vehicle_id,client:r.client,phone:r.phone||"",email:r.email||"",address:r.address||"",licenseNum:r.license_num||"",licenseDate:r.license_date||"",idNum:r.id_num||"",start:r.start_date,end:r.end_date,rate:r.rate,deposit:r.deposit||0,notes:r.notes||"",pickupLocation:r.pickup_location||"agence",dropLocation:r.drop_location||"agence",extraFees:r.extra_fees||0,extraFeesNote:r.extra_fees_note||"",days:r.days||null});
 const me=r=>({id:r.id,vehicleId:r.vehicle_id,date:r.date,amount:r.amount,category:r.category,note:r.note||""});
@@ -441,6 +445,51 @@ function EdlSection({title,icon,data,onChange,mob,BG,S1,S2}){
   );
 }
 
+// ── ÉCRAN DE CONNEXION ───────────────────────────────────────────────────
+function LoginScreen({onLogin}){
+  const[user,setUser]=useState("");
+  const[pass,setPass]=useState("");
+  const[err,setErr]=useState("");
+  const[show,setShow]=useState(false);
+  const mob=useIsMobile();
+  const submit=e=>{
+    e.preventDefault();
+    if(user.trim()===APP_USER&&pass===APP_PASS){
+      localStorage.setItem("ctl_auth","1");
+      setErr("");
+      onLogin();
+    }else{
+      setErr("Identifiant ou mot de passe incorrect");
+    }
+  };
+  return(
+    <div style={{minHeight:"100dvh",width:"100%",background:"#0F1117",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"'Inter',system-ui,sans-serif"}}>
+      <form onSubmit={submit} style={{width:"100%",maxWidth:380,background:"#161B27",border:"1px solid #1E2535",borderRadius:18,padding:mob?"28px 24px":"36px 32px",boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:26}}>
+          <img src={LOGO} alt="" style={{width:56,height:56,objectFit:"contain",filter:"brightness(10)",marginBottom:12}}/>
+          <div style={{fontWeight:800,fontSize:18,color:"#F1F5F9"}}>Chane-To Location</div>
+          <div style={{fontSize:11,color:"#64748B",marginTop:2}}>Espace de gestion privé</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div>
+            <label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>IDENTIFIANT</label>
+            <input value={user} onChange={e=>setUser(e.target.value)} autoCapitalize="none" autoCorrect="off" placeholder="Votre identifiant" style={{width:"100%",boxSizing:"border-box",background:"#0F1117",border:"1px solid #2D3748",color:"#E2E8F0",padding:"11px 13px",borderRadius:9,fontSize:14,outline:"none"}}/>
+          </div>
+          <div>
+            <label style={{fontSize:11,color:"#475569",fontWeight:600,display:"block",marginBottom:6}}>MOT DE PASSE</label>
+            <div style={{position:"relative"}}>
+              <input type={show?"text":"password"} value={pass} onChange={e=>setPass(e.target.value)} placeholder="Votre mot de passe" style={{width:"100%",boxSizing:"border-box",background:"#0F1117",border:"1px solid #2D3748",color:"#E2E8F0",padding:"11px 40px 11px 13px",borderRadius:9,fontSize:14,outline:"none"}}/>
+              <button type="button" onClick={()=>setShow(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#475569",cursor:"pointer",fontSize:15}}>{show?"🙈":"👁"}</button>
+            </div>
+          </div>
+          {err&&<div style={{background:"#EF444415",border:"1px solid #EF444430",color:"#EF4444",borderRadius:8,padding:"9px 12px",fontSize:12,fontWeight:600}}>{err}</div>}
+          <button type="submit" style={{width:"100%",background:"linear-gradient(135deg,#1a1a2e,#3B82F6)",border:"none",color:"#fff",padding:"13px",borderRadius:10,cursor:"pointer",fontWeight:800,fontSize:14,marginTop:6,boxShadow:"0 4px 20px rgba(59,130,246,.4)"}}>Se connecter</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport}){
   const isPWA=()=>window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
   const openPDFBlob=(html,filename)=>{
@@ -648,7 +697,7 @@ function EdlPage({vehicles,bookings,mob,BG,S1,S2,S3,card,btnP,fd,fds,logExport})
 }
 
 
-export default function App(){
+function MainApp(){
   const today=(()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})();
   const TY=new Date().getFullYear(),TM=new Date().getMonth();
   const mob=useIsMobile();
@@ -941,6 +990,10 @@ export default function App(){
                     <span style={{fontSize:10,color:"#475569",background:BG,padding:"2px 7px",borderRadius:10}}>{item.count}</span>
                   </button>
                 ))}
+                <button onClick={()=>{localStorage.removeItem("ctl_auth");window.location.reload();}} style={{width:"100%",background:"transparent",border:"none",color:"#EF4444",padding:"11px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,fontSize:13,fontWeight:600,textAlign:"left"}}>
+                  <span style={{fontSize:16}}>🚪</span>
+                  <span style={{flex:1}}>Se déconnecter</span>
+                </button>
               </div>
             </>}
           </div>
@@ -1703,4 +1756,12 @@ export default function App(){
 
     </div>
   );
+}
+
+export default function App(){
+  const[authed,setAuthed]=useState(()=>{
+    try{return localStorage.getItem("ctl_auth")==="1";}catch(e){return false;}
+  });
+  if(!authed)return <LoginScreen onLogin={()=>setAuthed(true)}/>;
+  return <MainApp/>;
 }
